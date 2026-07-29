@@ -4,6 +4,10 @@ import { createContext, useContext, useState } from 'react';
 
 const CartContext = createContext(null);
 
+// Identifiant unique d'une ligne de panier : une même référence
+// déclinée en plusieurs tailles compte comme plusieurs lignes.
+export const lineId = (productId, size) => `${productId}::${size}`;
+
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [open, setOpen] = useState(false);
@@ -11,32 +15,41 @@ export function CartProvider({ children }) {
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const subtotal = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
 
-  const addToCart = (product) => {
+  const addToCart = (product, size) => {
     setCart((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
+      const existing = prev.find(
+        (i) => i.product.id === product.id && i.size === size
+      );
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id ? { ...i, qty: i.qty + 1 } : i
+          i.product.id === product.id && i.size === size
+            ? { ...i, qty: i.qty + 1 }
+            : i
         );
       }
-      return [...prev, { product, qty: 1 }];
+      return [...prev, { product, size, qty: 1 }];
     });
     setOpen(true);
   };
 
   const inc = (id) =>
     setCart((p) =>
-      p.map((i) => (i.product.id === id ? { ...i, qty: i.qty + 1 } : i))
+      p.map((i) =>
+        lineId(i.product.id, i.size) === id ? { ...i, qty: i.qty + 1 } : i
+      )
     );
 
   const dec = (id) =>
     setCart((p) =>
       p
-        .map((i) => (i.product.id === id ? { ...i, qty: i.qty - 1 } : i))
+        .map((i) =>
+          lineId(i.product.id, i.size) === id ? { ...i, qty: i.qty - 1 } : i
+        )
         .filter((i) => i.qty > 0)
     );
 
-  const remove = (id) => setCart((p) => p.filter((i) => i.product.id !== id));
+  const remove = (id) =>
+    setCart((p) => p.filter((i) => lineId(i.product.id, i.size) !== id));
 
   const openCart = () => setOpen(true);
   const closeCart = () => setOpen(false);

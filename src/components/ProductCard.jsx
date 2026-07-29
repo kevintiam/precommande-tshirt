@@ -1,5 +1,5 @@
 import Image from 'next/image';
-import AddToCartButton from '@/components/AddToCartButton';
+import ProductActions from '@/components/ProductActions';
 
 export default function ProductCard({ product }) {
   return (
@@ -36,11 +36,8 @@ export default function ProductCard({ product }) {
           ))}
         </div>
 
-        <div className="mt-5 flex items-center justify-between">
-          <span className="text-2xl font-semibold text-stone-900">
-            {product.price} €
-          </span>
-          <AddToCartButton product={product} />
+        <div className="mt-5">
+          <ProductActions product={product} />
         </div>
       </div>
     </div>

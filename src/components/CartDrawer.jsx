@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
-import { useCart } from '@/components/CartProvider';
+import { useCart, lineId } from '@/components/CartProvider';
 
 export default function CartDrawer() {
   const { cart: items, subtotal, open, closeCart, inc, dec, remove } = useCart();
@@ -43,56 +43,59 @@ export default function CartDrawer() {
             </div>
           ) : (
             <ul className="space-y-4">
-              {items.map(({ product, qty }) => (
-                <li
-                  key={product.id}
-                  className="flex gap-4 rounded-xl border border-stone-100 p-3"
-                >
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    width={80}
-                    height={96}
-                    className="h-24 w-20 flex-none rounded-lg object-cover"
-                  />
-                  <div className="flex flex-1 flex-col">
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-sm font-medium text-stone-900">
-                        {product.name}
-                      </h3>
-                      <button
-                        onClick={() => remove(product.id)}
-                        className="text-stone-400 transition-colors hover:text-red-500"
-                        aria-label={`Retirer ${product.name}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+              {items.map(({ product, size, qty }) => {
+                const id = lineId(product.id, size);
+                return (
+                  <li
+                    key={id}
+                    className="flex gap-4 rounded-xl border border-stone-100 p-3"
+                  >
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      width={80}
+                      height={96}
+                      className="h-24 w-20 flex-none rounded-lg object-cover"
+                    />
+                    <div className="flex flex-1 flex-col">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-sm font-medium text-stone-900">
+                          {product.name}
+                        </h3>
+                        <button
+                          onClick={() => remove(id)}
+                          className="text-stone-400 transition-colors hover:text-red-500"
+                          aria-label={`Retirer ${product.name}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <p className="mt-0.5 text-sm text-stone-500">
+                        Taille {size} · {product.price} €
+                      </p>
+                      <div className="mt-auto flex items-center gap-3 pt-2">
+                        <button
+                          onClick={() => dec(id)}
+                          className="rounded-full border border-stone-200 p-1 text-stone-600 transition-colors hover:bg-stone-100"
+                          aria-label="Diminuer la quantité"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="w-6 text-center text-sm font-medium">
+                          {qty}
+                        </span>
+                        <button
+                          onClick={() => inc(id)}
+                          className="rounded-full border border-stone-200 p-1 text-stone-600 transition-colors hover:bg-stone-100"
+                          aria-label="Augmenter la quantité"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
-                    <p className="mt-0.5 text-sm text-stone-500">
-                      {product.price} €
-                    </p>
-                    <div className="mt-auto flex items-center gap-3 pt-2">
-                      <button
-                        onClick={() => dec(product.id)}
-                        className="rounded-full border border-stone-200 p-1 text-stone-600 transition-colors hover:bg-stone-100"
-                        aria-label="Diminuer la quantité"
-                      >
-                        <Minus className="h-3.5 w-3.5" />
-                      </button>
-                      <span className="w-6 text-center text-sm font-medium">
-                        {qty}
-                      </span>
-                      <button
-                        onClick={() => inc(product.id)}
-                        className="rounded-full border border-stone-200 p-1 text-stone-600 transition-colors hover:bg-stone-100"
-                        aria-label="Augmenter la quantité"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
