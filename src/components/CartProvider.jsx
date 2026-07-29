@@ -8,12 +8,20 @@ const CartContext = createContext(null);
 // déclinée en plusieurs tailles compte comme plusieurs lignes.
 export const lineId = (productId, size) => `${productId}::${size}`;
 
+// Livraison offerte à partir de ce montant, sinon frais forfaitaires.
+export const FREE_SHIPPING_THRESHOLD = 50;
+export const SHIPPING_FEE = 4.9;
+
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [open, setOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const subtotal = cart.reduce((s, i) => s + i.product.price * i.qty, 0);
+  const shipping =
+    subtotal === 0 || subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_FEE;
+  const total = subtotal + shipping;
 
   const addToCart = (product, size) => {
     setCart((prev) => {
@@ -51,8 +59,17 @@ export function CartProvider({ children }) {
   const remove = (id) =>
     setCart((p) => p.filter((i) => lineId(i.product.id, i.size) !== id));
 
+  const clearCart = () => setCart([]);
+
   const openCart = () => setOpen(true);
   const closeCart = () => setOpen(false);
+
+  // Ouvre le tunnel de paiement en refermant le tiroir panier.
+  const openCheckout = () => {
+    setOpen(false);
+    setCheckoutOpen(true);
+  };
+  const closeCheckout = () => setCheckoutOpen(false);
 
   return (
     <CartContext.Provider
@@ -60,13 +77,19 @@ export function CartProvider({ children }) {
         cart,
         cartCount,
         subtotal,
+        shipping,
+        total,
         addToCart,
         inc,
         dec,
         remove,
+        clearCart,
         open,
         openCart,
         closeCart,
+        checkoutOpen,
+        openCheckout,
+        closeCheckout,
       }}
     >
       {children}

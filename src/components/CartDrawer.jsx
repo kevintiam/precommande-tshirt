@@ -5,7 +5,8 @@ import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCart, lineId } from '@/components/CartProvider';
 
 export default function CartDrawer() {
-  const { cart: items, subtotal, open, closeCart, inc, dec, remove } = useCart();
+  const { cart: items, subtotal, open, closeCart, inc, dec, remove, openCheckout } =
+    useCart();
 
   return (
     <>
@@ -112,11 +113,7 @@ export default function CartDrawer() {
               Frais de port calculés à l&apos;étape suivante.
             </p>
             <button
-              onClick={() =>
-                alert(
-                  'Le paiement en ligne arrive bientôt ! Vous pourrez payer par carte bancaire, Apple Pay et plus.'
-                )
-              }
+              onClick={openCheckout}
               className="mt-4 w-full rounded-full bg-stone-900 py-3.5 text-base font-semibold text-white transition-all hover:bg-amber-500 hover:text-stone-950"
             >
               Passer commande

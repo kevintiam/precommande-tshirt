@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import ProductCard from '@/components/ProductCard';
 import CartDrawer from '@/components/CartDrawer';
+import Checkout from '@/components/Checkout';
 import { products } from '@/data/products';
 
 export default function Home() {
@@ -118,6 +119,7 @@ export default function Home() {
         </footer>
 
         <CartDrawer />
+        <Checkout />
       </div>
     </CartProvider>
   );
