@@ -17,6 +17,13 @@ const eur = new Intl.NumberFormat('fr-FR', {
   currency: 'EUR',
 });
 
+const methodMeta = {
+  card: { label: 'Carte bancaire' },
+  applepay: { label: 'Apple Pay' },
+  googlepay: { label: 'Google Pay' },
+  paypal: { label: 'PayPal' },
+};
+
 const emptyForm = {
   email: '',
   firstName: '',
@@ -53,6 +60,7 @@ export default function Checkout() {
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('form'); // 'form' | 'processing' | 'done'
   const [order, setOrder] = useState(null);
+  const [method, setMethod] = useState('card');
 
   if (!checkoutOpen) return null;
 
@@ -73,11 +81,13 @@ export default function Checkout() {
     if (!form.address.trim()) e.address = 'Requis';
     if (!/^\d{4,5}$/.test(form.zip.trim())) e.zip = 'Code postal invalide';
     if (!form.city.trim()) e.city = 'Requis';
-    if (!form.cardName.trim()) e.cardName = 'Requis';
-    if (form.cardNumber.replace(/\s/g, '').length < 13)
-      e.cardNumber = 'Numéro de carte invalide';
-    if (!/^\d{2}\/\d{2}$/.test(form.expiry)) e.expiry = 'MM/AA';
-    if (form.cvc.length < 3) e.cvc = 'CVC';
+    if (method === 'card') {
+      if (!form.cardName.trim()) e.cardName = 'Requis';
+      if (form.cardNumber.replace(/\s/g, '').length < 13)
+        e.cardNumber = 'Numéro de carte invalide';
+      if (!/^\d{2}\/\d{2}$/.test(form.expiry)) e.expiry = 'MM/AA';
+      if (form.cvc.length < 3) e.cvc = 'CVC';
+    }
     return e;
   };
 
@@ -94,6 +104,7 @@ export default function Checkout() {
         ref: `CR-${Date.now().toString().slice(-6)}`,
         email: form.email,
         total,
+        method: methodMeta[method].label,
       });
       clearCart();
       setStatus('done');
@@ -147,6 +158,12 @@ export default function Checkout() {
                 Montant réglé :{' '}
                 <span className="font-semibold text-stone-900">
                   {eur.format(order.total)}
+                </span>
+              </p>
+              <p className="mt-1 text-stone-500">
+                Moyen de paiement :{' '}
+                <span className="font-semibold text-stone-900">
+                  {order.method}
                 </span>
               </p>
             </div>
@@ -225,44 +242,58 @@ export default function Checkout() {
                 />
               </Section>
 
-              <Section title="Carte bancaire">
-                <Field
-                  label="Nom sur la carte"
-                  value={form.cardName}
-                  onChange={set('cardName')}
-                  error={errors.cardName}
-                  autoComplete="cc-name"
-                />
-                <Field
-                  label="Numéro de carte"
-                  value={form.cardNumber}
-                  onChange={set('cardNumber')}
-                  error={errors.cardNumber}
-                  inputMode="numeric"
-                  placeholder="1234 5678 9012 3456"
-                  autoComplete="cc-number"
-                  icon={<CreditCard className="h-4 w-4 text-stone-400" />}
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <Field
-                    label="Expiration"
-                    value={form.expiry}
-                    onChange={set('expiry')}
-                    error={errors.expiry}
-                    inputMode="numeric"
-                    placeholder="MM/AA"
-                    autoComplete="cc-exp"
-                  />
-                  <Field
-                    label="CVC"
-                    value={form.cvc}
-                    onChange={set('cvc')}
-                    error={errors.cvc}
-                    inputMode="numeric"
-                    placeholder="123"
-                    autoComplete="cc-csc"
-                  />
-                </div>
+              <Section title="Mode de paiement">
+                <MethodSelector method={method} setMethod={setMethod} />
+
+                {method === 'card' ? (
+                  <div className="space-y-3 pt-1">
+                    <Field
+                      label="Nom sur la carte"
+                      value={form.cardName}
+                      onChange={set('cardName')}
+                      error={errors.cardName}
+                      autoComplete="cc-name"
+                    />
+                    <Field
+                      label="Numéro de carte"
+                      value={form.cardNumber}
+                      onChange={set('cardNumber')}
+                      error={errors.cardNumber}
+                      inputMode="numeric"
+                      placeholder="1234 5678 9012 3456"
+                      autoComplete="cc-number"
+                      icon={<CreditCard className="h-4 w-4 text-stone-400" />}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Field
+                        label="Expiration"
+                        value={form.expiry}
+                        onChange={set('expiry')}
+                        error={errors.expiry}
+                        inputMode="numeric"
+                        placeholder="MM/AA"
+                        autoComplete="cc-exp"
+                      />
+                      <Field
+                        label="CVC"
+                        value={form.cvc}
+                        onChange={set('cvc')}
+                        error={errors.cvc}
+                        inputMode="numeric"
+                        placeholder="123"
+                        autoComplete="cc-csc"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <p className="rounded-lg bg-stone-50 px-4 py-3 text-sm text-stone-500">
+                    Vous serez redirigé pour confirmer votre paiement avec{' '}
+                    <span className="font-medium text-stone-700">
+                      {methodMeta[method].label}
+                    </span>
+                    .
+                  </p>
+                )}
               </Section>
             </div>
 
@@ -320,23 +351,12 @@ export default function Checkout() {
                 )}
               </div>
 
-              <button
-                type="submit"
+              <PayButton
+                method={method}
+                total={total}
+                processing={status === 'processing'}
                 disabled={status === 'processing' || cart.length === 0}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-stone-900 py-3.5 text-base font-semibold text-white transition-all hover:bg-amber-500 hover:text-stone-950 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {status === 'processing' ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Traitement…
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-4 w-4" />
-                    Payer {eur.format(total)}
-                  </>
-                )}
-              </button>
+              />
 
               <p className="flex items-center justify-center gap-1.5 text-center text-xs text-stone-400">
                 <ShieldCheck className="h-3.5 w-3.5" />
@@ -389,5 +409,143 @@ function Row({ label, value }) {
       <span>{label}</span>
       <span className="text-stone-700">{value}</span>
     </div>
+  );
+}
+
+const methodMarks = {
+  card: <CreditCard className="h-5 w-5 text-stone-700" />,
+  applepay: <ApplePayMark className="h-5" />,
+  googlepay: <GooglePayMark className="h-5" />,
+  paypal: <PayPalMark className="h-4" />,
+};
+
+function MethodSelector({ method, setMethod }) {
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {Object.keys(methodMeta).map((id) => {
+        const active = id === method;
+        return (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setMethod(id)}
+            aria-pressed={active}
+            className={`flex h-14 items-center justify-center rounded-xl border-2 transition-colors ${
+              active
+                ? 'border-stone-900 bg-stone-50'
+                : 'border-stone-200 hover:border-stone-300'
+            }`}
+            aria-label={methodMeta[id].label}
+          >
+            {methodMarks[id]}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function PayButton({ method, total, processing, disabled }) {
+  const base =
+    'flex w-full items-center justify-center gap-2 rounded-full py-3.5 text-base font-semibold transition-all disabled:cursor-not-allowed disabled:opacity-60';
+
+  const styles = {
+    card: 'bg-stone-900 text-white hover:bg-amber-500 hover:text-stone-950',
+    applepay: 'bg-black text-white hover:bg-stone-800',
+    googlepay: 'bg-black text-white hover:bg-stone-800',
+    paypal: 'bg-[#ffc439] text-[#003087] hover:brightness-95',
+  };
+
+  const content = () => {
+    if (processing)
+      return (
+        <>
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Traitement…
+        </>
+      );
+    switch (method) {
+      case 'applepay':
+        return (
+          <>
+            <AppleLogo className="h-5 w-5" /> Pay
+          </>
+        );
+      case 'googlepay':
+        return (
+          <>
+            <GooglePayMark className="h-5" invert /> Pay
+          </>
+        );
+      case 'paypal':
+        return <PayPalMark className="h-5" />;
+      default:
+        return (
+          <>
+            <Lock className="h-4 w-4" />
+            Payer {eur.format(total)}
+          </>
+        );
+    }
+  };
+
+  return (
+    <button
+      type="submit"
+      disabled={disabled}
+      className={`${base} ${styles[method]}`}
+    >
+      {content()}
+    </button>
+  );
+}
+
+function AppleLogo({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
+      <path d="M17.05 12.04c-.03-2.6 2.12-3.85 2.22-3.91-1.21-1.77-3.1-2.02-3.77-2.05-1.6-.16-3.13.94-3.94.94-.81 0-2.07-.92-3.4-.9-1.75.03-3.36 1.02-4.26 2.58-1.82 3.16-.47 7.84 1.3 10.41.86 1.26 1.89 2.67 3.24 2.62 1.3-.05 1.79-.84 3.36-.84 1.57 0 2.01.84 3.39.81 1.4-.02 2.29-1.28 3.15-2.55.99-1.46 1.4-2.87 1.42-2.95-.03-.01-2.72-1.04-2.75-4.13M14.53 4.6c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.55-.66.77-1.24 2-1.09 3.18 1.15.09 2.32-.58 3.04-1.45" />
+    </svg>
+  );
+}
+
+function ApplePayMark({ className }) {
+  return (
+    <span className={`inline-flex items-center gap-1 font-semibold text-stone-800 ${className}`}>
+      <AppleLogo className="h-4 w-4" />
+      Pay
+    </span>
+  );
+}
+
+function GoogleG({ className }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <path fill="#4285F4" d="M23.52 12.27c0-.82-.07-1.6-.2-2.36H12v4.47h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.58-5.17 3.58-8.73z" />
+      <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.95-2.9l-3.88-3c-1.08.72-2.45 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.28v3.09A12 12 0 0 0 12 24z" />
+      <path fill="#FBBC05" d="M5.27 14.29a7.2 7.2 0 0 1 0-4.58V6.62H1.28a12 12 0 0 0 0 10.76z" />
+      <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.44-3.44C17.95 1.19 15.24 0 12 0A12 12 0 0 0 1.28 6.62l3.99 3.09C6.22 6.86 8.87 4.75 12 4.75z" />
+    </svg>
+  );
+}
+
+function GooglePayMark({ className, invert }) {
+  return (
+    <span
+      className={`inline-flex items-center gap-1 font-semibold ${
+        invert ? 'text-white' : 'text-stone-800'
+      } ${className}`}
+    >
+      <GoogleG className="h-4 w-4" />
+      Pay
+    </span>
+  );
+}
+
+function PayPalMark({ className }) {
+  return (
+    <span className={`inline-flex items-center font-bold italic ${className}`}>
+      <span className="text-[#003087]">Pay</span>
+      <span className="text-[#009cde]">Pal</span>
+    </span>
   );
 }
