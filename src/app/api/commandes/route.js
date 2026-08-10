@@ -1,5 +1,10 @@
 import { products } from '@/data/products';
-import { creerCommande, attacherPaiement, STATUTS } from '@/libs/commandes';
+import {
+  creerCommande,
+  attacherPaiement,
+  lireParJeton,
+  STATUTS,
+} from '@/libs/commandes';
 import { configuree, demanderPaiement } from '@/libs/vopay';
 
 // Le navigateur peut envoyer n'importe quoi : la validation de
@@ -31,7 +36,16 @@ export async function POST(request) {
     return erreur('Requête illisible.');
   }
 
-  const { email, firstName, lastName, lignes } = corps ?? {};
+  const { email, firstName, lastName, lignes, clientToken } = corps ?? {};
+
+  // Avant toute création : cet essai reprend-il une commande déjà passée ?
+  if (typeof clientToken === 'string' && clientToken) {
+    const dejaVue = await lireParJeton(clientToken);
+    if (dejaVue) {
+      console.warn('[commandes] rejeu du jeton %s → %s', clientToken, dejaVue.ref);
+      return Response.json({ mode: dejaVue.mode ?? 'manuel', ...resume(dejaVue) });
+    }
+  }
 
   if (typeof email !== 'string' || !EMAIL_RE.test(email))
     return erreur('E-mail invalide.');
@@ -73,6 +87,7 @@ export async function POST(request) {
 
   const commande = await creerCommande({
     ref: genererReference(),
+    clientToken: clientToken ?? null,
     date: new Date().toISOString(),
     email: email.trim(),
     firstName: firstName.trim(),

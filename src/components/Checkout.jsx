@@ -21,6 +21,14 @@ const emptyForm = {
   lastName: '',
 };
 
+// Jeton d'idempotence : identifie une tentative de commande, pas une
+// commande. Tant que le navigateur n'a pas vu de réponse réussie, il
+// renvoie le même — le serveur reconnaît alors le rejeu au lieu de créer
+// un doublon. randomUUID exige un contexte sécurisé, d'où le repli.
+const nouveauJeton = () =>
+  globalThis.crypto?.randomUUID?.() ??
+  `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 export default function Checkout({
   cart,
   total,
@@ -34,6 +42,7 @@ export default function Checkout({
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('form'); // 'form' | 'processing'
   const [copie, setCopie] = useState(false);
+  const [jeton, setJeton] = useState(nouveauJeton);
 
   const set = createSet(setForm);
 
@@ -51,12 +60,15 @@ export default function Checkout({
     if (Object.keys(e).length > 0) return;
 
     setStatus('processing');
+
+    let data;
     try {
       const res = await fetch('/api/commandes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...form,
+          clientToken: jeton,
           lignes: cart.map((i) => ({
             productId: i.product.id,
             size: i.size,
@@ -65,27 +77,42 @@ export default function Checkout({
         }),
       });
 
-      // Le serveur renvoie { message } en cas de refus : on le remonte
-      // tel quel plutôt qu'un « une erreur est survenue » inexploitable.
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message);
+      // Une erreur serveur renvoie souvent une page HTML, pas du JSON :
+      // on lit le texte brut pour pouvoir le tracer, et on retombe sur
+      // le code HTTP quand aucun message exploitable n'est fourni.
+      const brut = await res.text();
+      try {
+        data = brut ? JSON.parse(brut) : {};
+      } catch {
+        console.error('Réponse non JSON de /api/commandes :', brut.slice(0, 500));
+        data = {};
+      }
 
-      setStatus('form');
-      onConfirmed(data);
-
-      // Formulaire hébergé par la passerelle : on y envoie le client.
-      // Sans URL, il approuve depuis la notification Interac reçue par
-      // courriel et reste sur l'écran de confirmation.
-      if (data.url) window.location.href = data.url;
+      if (!res.ok) {
+        throw new Error(data.message || `Le serveur a répondu ${res.status}.`);
+      }
     } catch (err) {
-      console.error('Enregistrement de la commande impossible :', err);
+      console.error('Commande refusée :', err);
       setStatus('form');
       setErrors({
         global:
           err.message ||
-          'Impossible d’enregistrer la commande. Vérifiez votre connexion et réessayez.',
+          'Connexion interrompue. Réessayez : votre commande ne sera pas créée en double.',
       });
+      return;
     }
+
+    // Hors du try, délibérément. Une erreur d'affichage après cette ligne
+    // ne doit jamais faire croire que la commande a échoué : elle est
+    // enregistrée côté serveur, et l'utilisateur recliquerait pour rien.
+    setStatus('form');
+    setJeton(nouveauJeton()); // la commande suivante sera bien distincte
+    onConfirmed(data);
+
+    // Formulaire hébergé par la passerelle : on y envoie le client. Sans
+    // URL, il approuve depuis la notification Interac reçue par courriel
+    // et reste sur l'écran de confirmation.
+    if (data.url) window.location.href = data.url;
   };
 
   const handleClose = () => {

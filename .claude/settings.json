@@ -13,7 +13,10 @@
       "WebFetch(domain:docs.vopay.com)",
       "Bash(tee /dev/stderr)",
       "Bash(node -e \"['VOPAY_BASE_URL','VOPAY_ACCOUNT_ID','VOPAY_API_KEY','VOPAY_SHARED_SECRET'].forEach\\(k=>console.log\\(k,'=',process.env[k]??'\\(absente\\)'\\)\\)\")",
-      "WebFetch(domain:vopay.com)"
+      "WebFetch(domain:vopay.com)",
+      "Bash(curl -s -w \"\\\\n[HTTP %{http_code}]\\\\n\" -X POST localhost:3113/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"tiamkevin9@gmail.com\",\"firstName\":\"Kevin Rostand\",\"lastName\":\"Sop Tiam\",\"lignes\":[{\"productId\":\"hoodie-bordeaux-degrade\",\"size\":\"XL\",\"qty\":1},{\"productId\":\"hoodie-blanc-degrade\",\"size\":\"L\",\"qty\":1}]}')",
+      "Bash(curl -s -w \"\\\\n[HTTP %{http_code}]\\\\n\" -X POST localhost:3000/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"tiamkevin9@gmail.com\",\"firstName\":\"Kevin Rostand\",\"lastName\":\"Sop Tiam\",\"lignes\":[{\"productId\":\"hoodie-bordeaux-degrade\",\"size\":\"XL\",\"qty\":1},{\"productId\":\"hoodie-blanc-degrade\",\"size\":\"L\",\"qty\":1}]}')",
+      "Bash(node -e ' *)"
     ]
   }
 }

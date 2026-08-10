@@ -39,6 +39,13 @@ export const creerCommande = async (commande) => {
 
 export const lireCommande = async (ref) => (await lireTout())[ref] ?? null;
 
+// Idempotence : le navigateur envoie le même jeton tant qu'il n'a pas
+// obtenu de confirmation. Si un réseau instable lui a caché une réponse
+// réussie, son nouvel essai retrouve la commande au lieu d'en créer une
+// seconde. Un balayage suffit ici ; en base, ce serait un index unique.
+export const lireParJeton = async (jeton) =>
+  Object.values(await lireTout()).find((c) => c.clientToken === jeton) ?? null;
+
 // Renvoie null si la commande est introuvable, et la commande inchangée
 // si elle a déjà quitté l'état d'attente — c'est ce qui rend le webhook
 // idempotent, condition indispensable puisque les passerelles rejouent
