@@ -16,7 +16,20 @@
       "WebFetch(domain:vopay.com)",
       "Bash(curl -s -w \"\\\\n[HTTP %{http_code}]\\\\n\" -X POST localhost:3113/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"tiamkevin9@gmail.com\",\"firstName\":\"Kevin Rostand\",\"lastName\":\"Sop Tiam\",\"lignes\":[{\"productId\":\"hoodie-bordeaux-degrade\",\"size\":\"XL\",\"qty\":1},{\"productId\":\"hoodie-blanc-degrade\",\"size\":\"L\",\"qty\":1}]}')",
       "Bash(curl -s -w \"\\\\n[HTTP %{http_code}]\\\\n\" -X POST localhost:3000/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"tiamkevin9@gmail.com\",\"firstName\":\"Kevin Rostand\",\"lastName\":\"Sop Tiam\",\"lignes\":[{\"productId\":\"hoodie-bordeaux-degrade\",\"size\":\"XL\",\"qty\":1},{\"productId\":\"hoodie-blanc-degrade\",\"size\":\"L\",\"qty\":1}]}')",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(rm -rf .data)",
+      "Bash(curl -s -w \" [%{http_code}]\" -X POST localhost:3114/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"a@b.ca\",\"firstName\":\"K\",\"lastName\":\"T\",\"clientToken\":\"t1\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":2}]}')",
+      "Bash(node -e \"console.log\\('commandes stockees :', Object.keys\\(require\\('./.data/commandes.json'\\)\\).length, '\\(attendu : 1\\)'\\)\")",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-5\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; Remove-Item -Recurse -Force \"c:\\\\Users\\\\tiamk\\\\Desktop\\\\e-commerce\\\\camp_reveil\\\\.data\" -ErrorAction SilentlyContinue; \"nettoye\")",
+      "Bash(curl -s -w \"\\\\n[HTTP %{http_code}]\\\\n\" -X POST localhost:3115/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"test@campadn.ca\",\"firstName\":\"Test\",\"lastName\":\"Sheets\",\"clientToken\":\"verif-sheets-1\",\"lignes\":[{\"productId\":\"hoodie-bleu-blanc\",\"size\":\"L\",\"qty\":2}]}')",
+      "Bash(curl -s -w \"\\\\n[HTTP %{http_code}]\\\\n\" -X POST localhost:3116/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"test@campadn.ca\",\"firstName\":\"Test\",\"lastName\":\"Sheets\",\"clientToken\":\"verif-sheets-2\",\"lignes\":[{\"productId\":\"hoodie-bleu-blanc\",\"size\":\"L\",\"qty\":2}]}')",
+      "Bash(curl -s -X POST localhost:3116/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"test@campadn.ca\",\"firstName\":\"Test\",\"lastName\":\"Sheets\",\"clientToken\":\"verif-sheets-2\",\"lignes\":[{\"productId\":\"hoodie-bleu-blanc\",\"size\":\"L\",\"qty\":2}]}')",
+      "Bash(curl -s -w \"\\\\n[HTTP %{http_code}]\\\\n\" -X POST localhost:3117/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"test@campadn.ca\",\"firstName\":\"Test\",\"lastName\":\"Sheets\",\"clientToken\":\"verif-sheets-3\",\"lignes\":[{\"productId\":\"hoodie-bleu-blanc\",\"size\":\"L\",\"qty\":2}]}')",
+      "Bash(curl -s -X POST localhost:3117/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"test@campadn.ca\",\"firstName\":\"Test\",\"lastName\":\"Sheets\",\"clientToken\":\"verif-sheets-3\",\"lignes\":[{\"productId\":\"hoodie-bleu-blanc\",\"size\":\"L\",\"qty\":2}]}')",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-4\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; \"arrete\")",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-6\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; \"serveur arrete\")",
+      "Bash(curl -s localhost:3119/)",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-3\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; \"arrete\")"
     ]
   }
 }

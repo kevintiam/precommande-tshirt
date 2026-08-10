@@ -1,0 +1,13 @@
+// Contrat commun à toutes les implémentations de stockage.
+
+// Cycle de vie d'une commande, du panier au t-shirt remis.
+export const STATUTS = {
+  EN_ATTENTE: 'en_attente_paiement', // créée, virement pas encore reçu
+  PAYEE: 'payee', // webhook de la passerelle confirmé
+  ECHOUEE: 'echouee', // refus, annulation, expiration
+};
+
+// Levée quand le stockage refuse d'écrire : disque en lecture seule,
+// feuille non partagée, quota Google atteint. Distinguer ce cas d'un vrai
+// bug permet de répondre 503 avec un message lisible plutôt qu'un 500.
+export class StockageIndisponible extends Error {}

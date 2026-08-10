@@ -22,7 +22,7 @@ export default function Home() {
 
       <footer className="border-t border-stone-200 px-5 py-6">
         <p className="mx-auto max-w-2xl text-center text-xs text-stone-400">
-          © 2026 Camp de Réveille
+          © 2026 Camp Impact ADN
         </p>
       </footer>
     </div>

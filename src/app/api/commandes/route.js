@@ -28,6 +28,10 @@ const genererReference = () =>
 
 const erreur = (message, status = 400) => Response.json({ message }, { status });
 
+const indisponible =
+  'Les commandes ne peuvent pas être enregistrées pour le moment. ' +
+  'Réessaie dans quelques minutes ou écris-nous.';
+
 export async function POST(request) {
   let corps;
   try {
@@ -39,11 +43,21 @@ export async function POST(request) {
   const { email, firstName, lastName, lignes, clientToken } = corps ?? {};
 
   // Avant toute création : cet essai reprend-il une commande déjà passée ?
+  // La lecture touche le stockage, donc elle peut échouer comme
+  // l'écriture — sans ce garde, un stockage cassé renvoyait un 500 nu.
   if (typeof clientToken === 'string' && clientToken) {
-    const dejaVue = await lireParJeton(clientToken);
-    if (dejaVue) {
-      console.warn('[commandes] rejeu du jeton %s → %s', clientToken, dejaVue.ref);
-      return Response.json({ mode: dejaVue.mode ?? 'manuel', ...resume(dejaVue) });
+    try {
+      const dejaVue = await lireParJeton(clientToken);
+      if (dejaVue) {
+        console.warn('[commandes] rejeu du jeton %s → %s', clientToken, dejaVue.ref);
+        return Response.json({
+          mode: dejaVue.mode ?? 'manuel',
+          ...resume(dejaVue),
+        });
+      }
+    } catch (err) {
+      console.error('[commandes] stockage illisible :', err);
+      return erreur(indisponible, 503);
     }
   }
 
@@ -85,17 +99,25 @@ export async function POST(request) {
 
   const total = detail.reduce((s, l) => s + l.prixUnitaire * l.qty, 0);
 
-  const commande = await creerCommande({
-    ref: genererReference(),
-    clientToken: clientToken ?? null,
-    date: new Date().toISOString(),
-    email: email.trim(),
-    firstName: firstName.trim(),
-    lastName: lastName.trim(),
-    lignes: detail,
-    total,
-    statut: STATUTS.EN_ATTENTE,
-  });
+  let commande;
+  try {
+    commande = await creerCommande({
+      ref: genererReference(),
+      clientToken: clientToken ?? null,
+      date: new Date().toISOString(),
+      email: email.trim(),
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      lignes: detail,
+      total,
+      statut: STATUTS.EN_ATTENTE,
+    });
+  } catch (err) {
+    // Sans enregistrement, accepter la commande reviendrait à encaisser
+    // un virement dont on ne saurait rien. On refuse franchement.
+    console.error('[commandes] enregistrement impossible :', err);
+    return erreur(indisponible, 503);
+  }
 
   // Sans identifiants VoPay, on retombe sur le virement manuel plutôt
   // que d'échouer : la commande est enregistrée, le client reçoit les

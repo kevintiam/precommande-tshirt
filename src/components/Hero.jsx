@@ -19,7 +19,7 @@ export default function Hero() {
       <div className="relative aspect-16/9 overflow-hidden rounded-xl bg-stone-100">
         <Image
           src="https://images.pexels.com/photos/34328505/pexels-photo-34328505.jpeg?auto=compress&cs=tinysrgb&h=1200&w=1920"
-          alt="Assemblée en louange lors du Camp de Réveille"
+          alt="Assemblée en louange lors du Camp Impact ADN"
           fill
           priority
           sizes="(min-width: 768px) 672px, 100vw"
@@ -28,7 +28,7 @@ export default function Hero() {
       </div>
 
       <h1 className="mt-6 font-serif text-3xl leading-tight text-stone-900">
-        T-shirts officiels — Camp Impact ADN
+        Boutique officielle — Camp Impact ADN
       </h1>
 
       <div className="mt-3 space-y-1.5 text-sm text-stone-500">
@@ -52,8 +52,9 @@ export default function Hero() {
       </div>
 
       <p className="mt-4 leading-relaxed text-stone-600">
-        Précommandez dès maintenant votre t-shirt du Camp de Réveille. Retrait
-        sur place pendant le camp ou livraison à domicile.
+        Précommandez dès maintenant votre t-shirt ou votre hoodie du Camp
+        Impact ADN. Paiement par virement Interac, retrait sur place pendant
+        le camp.
       </p>
     </section>
   );
