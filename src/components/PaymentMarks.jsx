@@ -64,7 +64,7 @@ function ConfirmButton({ total, processing, disabled }) {
     <button
       type="submit"
       disabled={disabled}
-      className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-stone-900 py-3 text-base font-semibold text-white transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
+      className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-bordeaux-700 py-3 font-display text-lg uppercase tracking-wide text-white transition-colors hover:bg-bordeaux-800 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
     >
       {processing ? (
         <>

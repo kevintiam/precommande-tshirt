@@ -12,7 +12,7 @@ export default function OrderSummary({ cart, total, onRemove, onCheckout }) {
       id="commande"
       className="scroll-mt-6 rounded-xl border border-stone-200 p-5"
     >
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
+      <h2 className="font-display text-xl uppercase text-stone-900">
         Votre commande
       </h2>
 
@@ -48,11 +48,13 @@ export default function OrderSummary({ cart, total, onRemove, onCheckout }) {
             ))}
           </ul>
 
-          <div className="mt-4 border-t border-stone-200 pt-4">
-            <div className="flex justify-between text-base font-semibold text-stone-900">
-              <span>Total</span>
-              <span>{formatPrice(total)}</span>
-            </div>
+          <div className="mt-4 flex items-baseline justify-between border-t border-stone-200 pt-4">
+            <span className="text-sm font-semibold uppercase tracking-wide text-stone-500">
+              Total
+            </span>
+            <span className="font-display text-2xl text-bordeaux-700">
+              {formatPrice(total)}
+            </span>
           </div>
         </>
       )}
@@ -61,7 +63,7 @@ export default function OrderSummary({ cart, total, onRemove, onCheckout }) {
         type="button"
         onClick={onCheckout}
         disabled={empty}
-        className="mt-5 w-full cursor-pointer rounded-lg bg-stone-900 py-3 text-base font-semibold text-white transition-colors hover:bg-stone-800 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
+        className="mt-5 w-full cursor-pointer rounded-lg bg-bordeaux-700 py-3 font-display text-lg uppercase tracking-wide text-white transition-colors hover:bg-bordeaux-800 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
       >
         Continuer
       </button>

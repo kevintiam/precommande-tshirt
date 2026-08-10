@@ -158,11 +158,11 @@ export default function Checkout({
   return (
     <div
       onClick={handleBackdrop}
-      className="fixed inset-0 z-[60] overflow-y-auto bg-stone-950/50 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-60 overflow-y-auto bg-stone-950/50 px-4 py-8 backdrop-blur-sm"
     >
       <div className="mx-auto w-full max-w-lg overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
-          <h2 className="font-serif text-lg text-stone-900">
+          <h2 className="font-display text-xl uppercase tracking-wide text-stone-900">
             {confirmation ? 'Commande enregistrée' : 'Finaliser la commande'}
           </h2>
           <button
@@ -180,7 +180,7 @@ export default function Checkout({
           <div className="px-5 py-8">
             <div className="flex flex-col items-center text-center">
               <CheckCircle2 className="h-12 w-12 text-emerald-500" />
-              <h3 className="mt-4 font-serif text-xl text-stone-900">
+              <h3 className="mt-4 font-display text-2xl uppercase leading-tight text-stone-900">
                 Merci ! Il reste une étape.
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-stone-500">
@@ -266,7 +266,7 @@ export default function Checkout({
             <button
               type="button"
               onClick={onTerminer}
-              className="mt-4 w-full cursor-pointer rounded-lg bg-stone-900 py-3 text-base font-semibold text-white transition-colors hover:bg-stone-800"
+              className="mt-4 w-full cursor-pointer rounded-lg bg-bordeaux-700 py-3 font-display text-lg uppercase tracking-wide text-white transition-colors hover:bg-bordeaux-800"
             >
               Terminer
             </button>
@@ -290,9 +290,11 @@ export default function Checkout({
                         alt={product.name}
                         fill
                         sizes="40px"
-                        className="object-cover"
+                        className={`object-cover ${
+                          product.imagePosition === 'left' ? 'object-left' : ''
+                        }`}
                       />
-                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-stone-900 text-xs font-bold text-white">
+                      <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-bordeaux-700 text-xs font-bold text-white">
                         {qty}
                       </span>
                     </div>

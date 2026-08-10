@@ -58,10 +58,11 @@ export default function Boutique({ products }) {
         </button>
       )}
 
-      <section className="mt-8">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
+      <section className="mt-10">
+        <h2 className="font-display text-2xl uppercase text-stone-900">
           Articles
         </h2>
+        <div className="degrade-impact mt-2 h-0.5 w-16 rounded-full" />
         <div className="mt-2">
           {products.map((p) => (
             <ProductCard

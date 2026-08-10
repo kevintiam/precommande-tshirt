@@ -41,7 +41,9 @@ export default async function PageCommande({ params }) {
     <main className="mx-auto w-full max-w-lg flex-1 px-5 py-16">
       <div className="flex flex-col items-center text-center">
         <Icone className={`h-12 w-12 ${couleur}`} />
-        <h1 className="mt-4 font-serif text-2xl text-stone-900">{titre}</h1>
+        <h1 className="mt-4 font-display text-3xl uppercase text-stone-900">
+          {titre}
+        </h1>
         <p className="mt-2 text-sm leading-relaxed text-stone-500">{texte}</p>
       </div>
 
@@ -71,7 +73,7 @@ export default async function PageCommande({ params }) {
 
       <Link
         href="/"
-        className="mt-6 block rounded-lg bg-stone-900 py-3 text-center text-base font-semibold text-white transition-colors hover:bg-stone-800"
+        className="mt-6 block rounded-lg bg-bordeaux-700 py-3 text-center font-display text-lg uppercase tracking-wide text-white transition-colors hover:bg-bordeaux-800"
       >
         Retour à la boutique
       </Link>

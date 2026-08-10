@@ -1,8 +1,27 @@
 @import "tailwindcss";
 
-@theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  /* Anton pour les titres : condensé, très gras, il rappelle l'arche
+     varsity imprimée sur les vêtements. Inter pour tout le reste, où la
+     lisibilité prime — Anton est illisible en petit corps. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-anton), ui-sans-serif, system-ui, sans-serif;
+
+  /* Bordeaux des t-shirts et hoodies. Couleur d'action du site :
+     tout ce qui se clique et qui engage. */
+  --color-bordeaux-50: #fdf5f6;
+  --color-bordeaux-100: #fae9eb;
+  --color-bordeaux-200: #f2d2d7;
+  --color-bordeaux-300: #e3a8b1;
+  --color-bordeaux-600: #7d2436;
+  --color-bordeaux-700: #6b1f2e;
+  --color-bordeaux-800: #551825;
+  --color-bordeaux-950: #2d0c13;
+
+  /* Bleu roi du hoodie. Accent de ponctuation, jamais une action :
+     deux couleurs cliquables rendraient l'interface illisible. */
+  --color-royal-600: #2547b0;
+  --color-royal-700: #1d3a94;
 }
 
 html {
@@ -10,5 +29,24 @@ html {
 }
 
 body {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Anton n'existe qu'en une graisse et n'a pas de vraies capitales
+   optiques : un léger resserrement évite l'effet « lettres qui flottent »
+   dans les grands titres en majuscules. */
+.font-display {
+  letter-spacing: -0.01em;
+}
+
+/* Dégradé rouge → bleu du logo IMPACT. Défini une fois ici plutôt que
+   répété en valeurs arbitraires : c'est un élément de marque, il doit
+   changer partout à la fois. */
+.degrade-impact {
+  background-image: linear-gradient(
+    to right,
+    #e03127,
+    #8b3fa8,
+    var(--color-royal-600)
+  );
 }
