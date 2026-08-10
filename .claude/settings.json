@@ -1,7 +1,19 @@
 {
   "permissions": {
     "allow": [
-      "Bash(echo \"exit=$?\")"
+      "Bash(echo \"exit=$?\")",
+      "WebSearch",
+      "Bash(npx next *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} \" -X POST localhost:3111/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"a@b.ca\",\"firstName\":\"Kevin\",\"lastName\":\"Tiam\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":2}]}')",
+      "Bash(curl -s -X POST localhost:3111/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"a@b.ca\",\"firstName\":\"Kevin\",\"lastName\":\"Tiam\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":2}]}')",
+      "Bash(curl -s -w \" [%{http_code}]\" -X POST localhost:3111/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"a@b.ca\",\"firstName\":\"K\",\"lastName\":\"T\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":-5}]}')",
+      "Bash(curl -s -w \" [%{http_code}]\" -X POST localhost:3111/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"a@b.ca\",\"firstName\":\"K\",\"lastName\":\"T\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"ZZZ\",\"qty\":1}]}')",
+      "Read(//tmp/**)",
+      "Bash(pkill -f \"next start\")",
+      "WebFetch(domain:docs.vopay.com)",
+      "Bash(tee /dev/stderr)",
+      "Bash(node -e \"['VOPAY_BASE_URL','VOPAY_ACCOUNT_ID','VOPAY_API_KEY','VOPAY_SHARED_SECRET'].forEach\\(k=>console.log\\(k,'=',process.env[k]??'\\(absente\\)'\\)\\)\")",
+      "WebFetch(domain:vopay.com)"
     ]
   }
 }

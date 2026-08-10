@@ -2,7 +2,7 @@ import { Loader2 } from 'lucide-react';
 import { formatPrice } from '@/libs/currency';
 
 // Adresse recevant les virements Interac. À remplacer par celle de l'organisation.
-export const INTERAC_EMAIL = 'paiement@campdereveille.ca';
+export const INTERAC_EMAIL = 'soptiam1@gmail.com';
 
 function Section({ title, children }) {
   return (

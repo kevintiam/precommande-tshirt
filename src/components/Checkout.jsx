@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { X, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { X, ShieldCheck, CheckCircle2, Copy, Check, Mail } from 'lucide-react';
 import { lineId } from '@/libs/cart';
 import { validate, createSet } from '@/libs/validation';
 import { formatPrice } from '@/libs/currency';
@@ -21,49 +21,112 @@ const emptyForm = {
   lastName: '',
 };
 
-export default function Checkout({ cart, total, open, onClose, onDone }) {
+export default function Checkout({
+  cart,
+  total,
+  vue,
+  order,
+  onClose,
+  onConfirmed,
+  onTerminer,
+}) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState('form'); // 'form' | 'processing' | 'done'
-  const [order, setOrder] = useState(null);
+  const [status, setStatus] = useState('form'); // 'form' | 'processing'
+  const [copie, setCopie] = useState(false);
 
   const set = createSet(setForm);
 
-  if (!open) return null;
+  if (vue === null) return null;
 
-  const handleSubmit = (ev) => {
+  const confirmation = vue === 'confirmation' && order;
+  // La passerelle envoie elle-même la demande Interac au client : les
+  // instructions de virement manuel n'ont alors plus lieu d'être.
+  const parPasserelle = order?.mode === 'passerelle';
+
+  const handleSubmit = async (ev) => {
     ev.preventDefault();
     const e = validate(form);
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
     setStatus('processing');
-    // Enregistrement simulé : aucun appel réseau. Le paiement lui-même se
-    // fait hors du site, par virement Interac vers INTERAC_EMAIL.
-    setTimeout(() => {
-      setOrder({
-        ref: `CR-${Date.now().toString().slice(-6)}`,
-        email: form.email,
-        total,
+    try {
+      const res = await fetch('/api/commandes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          lignes: cart.map((i) => ({
+            productId: i.product.id,
+            size: i.size,
+            qty: i.qty,
+          })),
+        }),
       });
-      onDone();
-      setStatus('done');
-    }, 1200);
+
+      // Le serveur renvoie { message } en cas de refus : on le remonte
+      // tel quel plutôt qu'un « une erreur est survenue » inexploitable.
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message);
+
+      setStatus('form');
+      onConfirmed(data);
+
+      // Formulaire hébergé par la passerelle : on y envoie le client.
+      // Sans URL, il approuve depuis la notification Interac reçue par
+      // courriel et reste sur l'écran de confirmation.
+      if (data.url) window.location.href = data.url;
+    } catch (err) {
+      console.error('Enregistrement de la commande impossible :', err);
+      setStatus('form');
+      setErrors({
+        global:
+          err.message ||
+          'Impossible d’enregistrer la commande. Vérifiez votre connexion et réessayez.',
+      });
+    }
   };
 
   const handleClose = () => {
     if (status === 'processing') return;
     onClose();
-    setStatus('form');
     setForm(emptyForm);
     setErrors({});
-    setOrder(null);
   };
 
-  // Ferme au clic sur le fond, jamais au clic dans le panneau.
   const handleBackdrop = (ev) => {
     if (ev.target === ev.currentTarget) handleClose();
   };
+
+  // Les trois informations que le client doit reporter dans son
+  // application bancaire, sous une forme copiable d'un geste.
+  const infosVirement = order
+    ? [
+        'Virement Interac — Camp Impact ADN',
+        `Destinataire : ${INTERAC_EMAIL}`,
+        `Montant : ${formatPrice(order.total)}`,
+        `Message / référence : ${order.ref}`,
+      ].join('\n')
+    : '';
+
+  const copier = async () => {
+    try {
+      await navigator.clipboard.writeText(infosVirement);
+      setCopie(true);
+      setTimeout(() => setCopie(false), 2000);
+    } catch {
+      // Presse-papiers refusé (contexte non sécurisé, permission) :
+      // les informations restent lisibles et sélectionnables à l'écran.
+      setCopie(false);
+    }
+  };
+
+  const lienMail = order
+    ? `mailto:${order.email}?subject=${encodeURIComponent(
+        `Commande ${order.ref} — Camp Impact ADN`
+      )}&body=${encodeURIComponent(infosVirement)}`
+    : '';
 
   return (
     <div
@@ -73,7 +136,7 @@ export default function Checkout({ cart, total, open, onClose, onDone }) {
       <div className="mx-auto w-full max-w-lg overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-xl">
         <header className="flex items-center justify-between border-b border-stone-200 px-5 py-4">
           <h2 className="font-serif text-lg text-stone-900">
-            {status === 'done' ? 'Commande enregistrée' : 'Finaliser la commande'}
+            {confirmation ? 'Commande enregistrée' : 'Finaliser la commande'}
           </h2>
           <button
             type="button"
@@ -86,7 +149,7 @@ export default function Checkout({ cart, total, open, onClose, onDone }) {
           </button>
         </header>
 
-        {status === 'done' ? (
+        {confirmation ? (
           <div className="px-5 py-8">
             <div className="flex flex-col items-center text-center">
               <CheckCircle2 className="h-12 w-12 text-emerald-500" />
@@ -94,13 +157,37 @@ export default function Checkout({ cart, total, open, onClose, onDone }) {
                 Merci ! Il reste une étape.
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-stone-500">
-                Votre commande est réservée. Envoyez maintenant votre virement
-                pour la confirmer. Un récapitulatif est parti à{' '}
-                <span className="font-medium text-stone-700">{order.email}</span>.
+                {parPasserelle ? (
+                  <>
+                    Une demande de paiement Interac a été envoyée à{' '}
+                    <span className="font-medium text-stone-700">
+                      {order.email}
+                    </span>
+                    . Approuvez-la dans votre application bancaire pour
+                    confirmer la commande.
+                  </>
+                ) : (
+                  <>
+                    Votre commande est réservée au nom de{' '}
+                    <span className="font-medium text-stone-700">
+                      {order.email}
+                    </span>
+                    . Envoyez maintenant votre virement pour la confirmer.
+                  </>
+                )}
               </p>
             </div>
 
-            <div className="mt-6 rounded-xl border border-stone-200 bg-stone-50 px-5 py-4">
+            <a
+              href={`/commande/${order.ref}`}
+              className="mt-6 block rounded-lg border border-stone-300 py-2.5 text-center text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50"
+            >
+              Suivre ma commande {order.ref}
+            </a>
+
+            {!parPasserelle && (
+            <>
+            <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 px-5 py-4">
               <InteracMark className="text-base" />
               <div className="mt-3 space-y-1.5 text-sm">
                 <Row label="Destinataire" value={INTERAC_EMAIL} />
@@ -113,10 +200,46 @@ export default function Checkout({ cart, total, open, onClose, onDone }) {
               </p>
             </div>
 
+            {/* Aucun e-mail n'étant envoyé, ces deux boutons sont les seuls
+                moyens pour le client d'emporter la référence avec lui. */}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={copier}
+                className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-stone-300 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50"
+              >
+                {copie ? (
+                  <>
+                    <Check className="h-4 w-4 text-emerald-600" />
+                    Copié
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4" />
+                    Copier les infos
+                  </>
+                )}
+              </button>
+              <a
+                href={lienMail}
+                className="flex items-center justify-center gap-2 rounded-lg border border-stone-300 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50"
+              >
+                <Mail className="h-4 w-4" />
+                M’envoyer ça
+              </a>
+            </div>
+
+            <p className="mt-4 text-center text-xs leading-relaxed text-amber-700">
+              Notez cette référence avant de fermer : aucun e-mail de
+              confirmation n’est envoyé automatiquement.
+            </p>
+            </>
+            )}
+
             <button
               type="button"
-              onClick={handleClose}
-              className="mt-6 w-full cursor-pointer rounded-lg bg-stone-900 py-3 text-base font-semibold text-white transition-colors hover:bg-stone-800"
+              onClick={onTerminer}
+              className="mt-4 w-full cursor-pointer rounded-lg bg-stone-900 py-3 text-base font-semibold text-white transition-colors hover:bg-stone-800"
             >
               Terminer
             </button>
@@ -201,6 +324,14 @@ export default function Checkout({ cart, total, open, onClose, onDone }) {
             </Section>
 
             <div>
+              {errors.global && (
+                <p
+                  role="alert"
+                  className="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                >
+                  {errors.global}
+                </p>
+              )}
               <ConfirmButton
                 total={total}
                 processing={status === 'processing'}
