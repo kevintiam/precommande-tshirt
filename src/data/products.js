@@ -1,73 +1,68 @@
+// Visuels : public/images/*.PNG
+// ⚠️ Prix indicatifs (t-shirt 30 $, hoodie 60 $) — à ajuster avant la mise en ligne.
 
 export const products = [
   {
-    id: 'reveille-classic',
-    name: 'Camp de Réveille — Classique',
+    id: 'tee-bordeaux-degrade',
+    name: 'T-shirt IMPACT — Bordeaux, logo dégradé',
     description:
-      "Le t-shirt officiel du Camp de Réveille. Coton bio 100 %, sérigraphie premium sur le cœur et dans le dos.",
-    price: 25,
-    image:
-      'https://images.pexels.com/photos/8217291/pexels-photo-8217291.jpeg?auto=compress&cs=tinysrgb&h=900&w=600',
-    colors: ['Blanc', 'Sable'],
-    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    badge: 'Best-seller',
-  },
-  {
-    id: 'reveille-night',
-    name: 'Camp de Réveille — Édition Nuit',
-    description:
-      "Version sombre pour les veilleurs. Tissu noir, logo doré en broderie, finition matte.",
+      'Coupe oversize, col rond côtelé. Logo IMPACT en arche dégradée rouge à bleu, surmontant l’ovale « CAMP ADN ».',
     price: 30,
-    image:
-      'https://images.pexels.com/photos/9558766/pexels-photo-9558766.jpeg?auto=compress&cs=tinysrgb&h=900&w=600',
-    colors: ['Noir'],
+    image: '/images/01.PNG',
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    badge: 'Édition limitée',
   },
   {
-    id: 'reveille-couple',
-    name: 'Camp de Réveille — Duo',
+    id: 'tee-bordeaux-blanc',
+    name: 'T-shirt IMPACT — Bordeaux, logo blanc',
     description:
-      "Le pack duo : deux t-shirts assortis pour vivre le camp à deux. Idéal pour couples et binômes.",
-    price: 45,
-    image:
-      'https://images.pexels.com/photos/8217365/pexels-photo-8217365.jpeg?auto=compress&cs=tinysrgb&h=900&w=600',
-    colors: ['Blanc'],
-    sizes: ['S', 'M', 'L', 'XL'],
-    badge: 'Pack duo',
-  },
-  {
-    id: 'reveille-youth',
-    name: 'Camp de Réveille — Jeunesse',
-    description:
-      "Coupe moderne et ajustée pour la jeunesse. Coton léger, idéal pour les sessions en plein air.",
-    price: 22,
-    image:
-      'https://images.pexels.com/photos/8217533/pexels-photo-8217533.jpeg?auto=compress&cs=tinysrgb&h=900&w=600',
-    colors: ['Blanc', 'Sable'],
-    sizes: ['XS', 'S', 'M', 'L'],
-  },
-  {
-    id: 'reveille-team',
-    name: 'Camp de Réveille — Staff',
-    description:
-      "T-shirt exclusif de l'équipe de service. Identification claire pour les bénévoles et responsables.",
-    price: 28,
-    image:
-      'https://images.pexels.com/photos/8217299/pexels-photo-8217299.jpeg?auto=compress&cs=tinysrgb&h=900&w=600',
-    colors: ['Gris', 'Noir'],
+      'La version sobre du t-shirt bordeaux : logo IMPACT et ovale « CAMP ADN » imprimés en blanc.',
+    price: 30,
+    image: '/images/03.PNG',
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
-    badge: 'Staff',
   },
   {
-    id: 'reveille-essentiel',
-    name: 'Camp de Réveille — Essentiel',
+    id: 'tee-blanc-degrade',
+    name: 'T-shirt IMPACT — Blanc, logo dégradé',
     description:
-      "Minimaliste et intemporel. Le logo discret brodé sur poitrine, pour porter le message au quotidien.",
-    price: 26,
-    image:
-      'https://images.pexels.com/photos/4066290/pexels-photo-4066290.jpeg?auto=compress&cs=tinysrgb&h=900&w=600',
-    colors: ['Blanc', 'Sable', 'Gris'],
+      'T-shirt blanc coupe oversize. Le dégradé rouge à bleu du logo ressort pleinement sur le fond clair.',
+    price: 30,
+    image: '/images/05.PNG',
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+  },
+  {
+    id: 'hoodie-bordeaux-degrade',
+    name: 'Hoodie IMPACT — Bordeaux, logo dégradé',
+    description:
+      'Sweat à capuche molletonné, poche kangourou et bords côtelés. Logo IMPACT en dégradé rouge à bleu.',
+    price: 60,
+    image: '/images/04.PNG',
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+  },
+  {
+    id: 'hoodie-bordeaux-blanc',
+    name: 'Hoodie IMPACT — Bordeaux, logo blanc',
+    description:
+      'Le hoodie bordeaux avec le logo IMPACT imprimé en blanc. Capuche doublée et poche kangourou.',
+    price: 60,
+    image: '/images/07.PNG',
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+  },
+  {
+    id: 'hoodie-bleu-blanc',
+    name: 'Hoodie IMPACT — Bleu roi, logo blanc',
+    description:
+      'Sweat à capuche bleu roi, logo IMPACT et ovale « CAMP ADN » en blanc. Coupe ample.',
+    price: 60,
+    image: '/images/06.PNG',
+    sizes: ['S', 'M', 'L', 'XL', 'XXL'],
+  },
+  {
+    id: 'hoodie-blanc-degrade',
+    name: 'Hoodie IMPACT — Blanc, logo dégradé',
+    description:
+      'Sweat à capuche blanc, molletonné, avec le logo IMPACT en dégradé rouge à bleu.',
+    price: 60,
+    image: '/images/08.PNG',
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
   },
 ];
