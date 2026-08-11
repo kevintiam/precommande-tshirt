@@ -18,7 +18,7 @@ export default function Hero() {
     <section>
       <div className="relative isolate overflow-hidden rounded-2xl">
         <Image
-          src="https://images.pexels.com/photos/34328505/pexels-photo-34328505.jpeg?auto=compress&cs=tinysrgb&h=1200&w=1920"
+          src="/images/accueil.jpeg"
           alt="Assemblée en louange lors du Camp Impact ADN"
           fill
           priority

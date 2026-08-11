@@ -3,7 +3,7 @@
 // Cycle de vie d'une commande, du panier au t-shirt remis.
 export const STATUTS = {
   EN_ATTENTE: 'en_attente_paiement', // créée, virement pas encore reçu
-  PAYEE: 'payee', // webhook de la passerelle confirmé
+  PAYEE: 'payee', // virement reçu, confirmé à la main dans la feuille
   ECHOUEE: 'echouee', // refus, annulation, expiration
 };
 

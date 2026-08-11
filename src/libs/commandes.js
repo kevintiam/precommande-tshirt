@@ -21,4 +21,3 @@ export const creerCommande = (commande) => impl.creerCommande(commande);
 export const lireCommande = (ref) => impl.lireCommande(ref);
 export const lireParJeton = (jeton) => impl.lireParJeton(jeton);
 export const majStatut = (ref, statut, meta) => impl.majStatut(ref, statut, meta);
-export const attacherPaiement = (ref, id) => impl.attacherPaiement(ref, id);

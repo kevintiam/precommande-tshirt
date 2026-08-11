@@ -52,11 +52,3 @@ export const majStatut = async (ref, statut, meta = {}) => {
   await ecrireTout(tout);
   return tout[ref];
 };
-
-export const attacherPaiement = async (ref, paiementId) => {
-  const tout = await lireTout();
-  if (!tout[ref]) return null;
-  tout[ref] = { ...tout[ref], paiementId };
-  await ecrireTout(tout);
-  return tout[ref];
-};

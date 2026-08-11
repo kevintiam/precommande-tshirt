@@ -1,11 +1,5 @@
 import { products } from '@/data/products';
-import {
-  creerCommande,
-  attacherPaiement,
-  lireParJeton,
-  STATUTS,
-} from '@/libs/commandes';
-import { configuree, demanderPaiement } from '@/libs/vopay';
+import { creerCommande, lireParJeton, STATUTS } from '@/libs/commandes';
 
 // Le navigateur peut envoyer n'importe quoi : la validation de
 // src/libs/validation.js tourne côté client et se contourne trivialement.
@@ -50,10 +44,7 @@ export async function POST(request) {
       const dejaVue = await lireParJeton(clientToken);
       if (dejaVue) {
         console.warn('[commandes] rejeu du jeton %s → %s', clientToken, dejaVue.ref);
-        return Response.json({
-          mode: dejaVue.mode ?? 'manuel',
-          ...resume(dejaVue),
-        });
+        return Response.json(resume(dejaVue));
       }
     } catch (err) {
       console.error('[commandes] stockage illisible :', err);
@@ -119,40 +110,10 @@ export async function POST(request) {
     return erreur(indisponible, 503);
   }
 
-  // Sans identifiants VoPay, on retombe sur le virement manuel plutôt
-  // que d'échouer : la commande est enregistrée, le client reçoit les
-  // instructions à recopier. Le mode est renvoyé explicitement pour que
-  // l'interface ne promette jamais ce qui n'a pas eu lieu.
-  if (!configuree) {
-    console.warn(
-      '[VoPay] identifiants absents — commande %s en virement manuel',
-      commande.ref
-    );
-    return Response.json({ mode: 'manuel', ...resume(commande) });
-  }
-
-  try {
-    const paiement = await demanderPaiement({
-      ref: commande.ref,
-      montant: commande.total,
-      email: commande.email,
-      nom: `${commande.firstName} ${commande.lastName}`,
-      message: `Camp Impact ADN — commande ${commande.ref}`,
-    });
-
-    await attacherPaiement(commande.ref, paiement.transactionId);
-
-    return Response.json({
-      mode: 'passerelle',
-      url: paiement.url,
-      ...resume(commande),
-    });
-  } catch (err) {
-    // La commande reste enregistrée : elle est récupérable côté admin,
-    // et le client repart avec les instructions manuelles.
-    console.error('[VoPay] demande de paiement refusée :', err);
-    return Response.json({ mode: 'manuel', ...resume(commande) });
-  }
+  // Le paiement se fait hors du site : le client repart avec l'adresse
+  // Interac, le montant et sa référence, puis envoie son virement depuis
+  // sa banque. Le statut est ensuite passé à « payee » dans la feuille.
+  return Response.json(resume(commande));
 }
 
 const resume = (commande) => ({

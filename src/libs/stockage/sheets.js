@@ -122,6 +122,25 @@ const versLigne = (c) => [
   JSON.stringify(c.lignes),
 ];
 
+// La colonne « Statut » est saisie à la main par le trésorier, une fois
+// le virement reçu. On tolère donc la casse, les accents
+// et les espaces : sans ça, un « Payée » tapé au clavier ne correspondrait
+// à rien et le client verrait « en attente » alors qu'il a déjà réglé.
+// Toute valeur non reconnue retombe sur « en attente » — ne jamais
+// annoncer un paiement reçu sur la foi d'une cellule ambiguë.
+const normaliserStatut = (valeur) => {
+  const v = String(valeur ?? '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '');
+
+  if (['payee', 'paye', 'paid', 'recu', 'oui'].includes(v)) return STATUTS.PAYEE;
+  if (['echouee', 'echoue', 'annulee', 'annule', 'non'].includes(v))
+    return STATUTS.ECHOUEE;
+  return STATUTS.EN_ATTENTE;
+};
+
 const depuisLigne = (r) => {
   let lignes = [];
   try {
@@ -135,7 +154,7 @@ const depuisLigne = (r) => {
   return {
     ref: r[0],
     date: r[1],
-    statut: r[2],
+    statut: normaliserStatut(r[2]),
     email: r[3],
     firstName: r[4],
     lastName: r[5],
@@ -227,15 +246,5 @@ export const majStatut = async (ref, statut, meta = {}) => {
 
   const maj = { ...commande, statut, ...meta, majLe: new Date().toISOString() };
   await ecrireLigne(index + 2, maj); // +2 : ligne 1 = en-têtes, index 0-based
-  return maj;
-};
-
-export const attacherPaiement = async (ref, paiementId) => {
-  const lignes = await lireLignes();
-  const index = lignes.findIndex((r) => r[0] === ref);
-  if (index < 0) return null;
-
-  const maj = { ...depuisLigne(lignes[index]), paiementId };
-  await ecrireLigne(index + 2, maj);
   return maj;
 };

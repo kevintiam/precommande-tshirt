@@ -49,9 +49,6 @@ export default function Checkout({
   if (vue === null) return null;
 
   const confirmation = vue === 'confirmation' && order;
-  // La passerelle envoie elle-même la demande Interac au client : les
-  // instructions de virement manuel n'ont alors plus lieu d'être.
-  const parPasserelle = order?.mode === 'passerelle';
 
   const handleSubmit = async (ev) => {
     ev.preventDefault();
@@ -108,11 +105,6 @@ export default function Checkout({
     setStatus('form');
     setJeton(nouveauJeton()); // la commande suivante sera bien distincte
     onConfirmed(data);
-
-    // Formulaire hébergé par la passerelle : on y envoie le client. Sans
-    // URL, il approuve depuis la notification Interac reçue par courriel
-    // et reste sur l'écran de confirmation.
-    if (data.url) window.location.href = data.url;
   };
 
   const handleClose = () => {
@@ -184,24 +176,9 @@ export default function Checkout({
                 Merci ! Il reste une étape.
               </h3>
               <p className="mt-2 text-sm leading-relaxed text-stone-500">
-                {parPasserelle ? (
-                  <>
-                    Une demande de paiement Interac a été envoyée à{' '}
-                    <span className="font-medium text-stone-700">
-                      {order.email}
-                    </span>
-                    . Approuvez-la dans votre application bancaire pour
-                    confirmer la commande.
-                  </>
-                ) : (
-                  <>
-                    Votre commande est réservée au nom de{' '}
-                    <span className="font-medium text-stone-700">
-                      {order.email}
-                    </span>
-                    . Envoyez maintenant votre virement pour la confirmer.
-                  </>
-                )}
+                Votre commande est réservée au nom de{' '}
+                <span className="font-medium text-stone-700">{order.email}</span>
+                . Envoyez maintenant votre virement pour la confirmer.
               </p>
             </div>
 
@@ -212,8 +189,6 @@ export default function Checkout({
               Suivre ma commande {order.ref}
             </a>
 
-            {!parPasserelle && (
-            <>
             <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 px-5 py-4">
               <InteracMark className="text-base" />
               <div className="mt-3 space-y-1.5 text-sm">
@@ -260,8 +235,6 @@ export default function Checkout({
               Notez cette référence avant de fermer : aucun e-mail de
               confirmation n’est envoyé automatiquement.
             </p>
-            </>
-            )}
 
             <button
               type="button"
