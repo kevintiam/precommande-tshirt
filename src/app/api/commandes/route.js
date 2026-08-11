@@ -1,5 +1,11 @@
 import { products } from '@/data/products';
-import { creerCommande, lireParJeton, STATUTS } from '@/libs/commandes';
+import {
+  creerCommande,
+  lireParJeton,
+  listerCommandes,
+  STATUTS,
+} from '@/libs/commandes';
+import { taillesDe, calculerRestant, restantPour } from '@/libs/stock';
 
 // Le navigateur peut envoyer n'importe quoi : la validation de
 // src/libs/validation.js tourne côté client et se contourne trivialement.
@@ -69,7 +75,7 @@ export async function POST(request) {
   for (const l of lignes) {
     const produit = products.find((p) => p.id === l?.productId);
     if (!produit) return erreur('Cette commande contient un article inconnu.');
-    if (!produit.sizes.includes(l.size))
+    if (!taillesDe(produit).includes(l.size))
       return erreur(`Taille indisponible pour « ${produit.name} ».`);
     if (!Number.isInteger(l.qty) || l.qty < 1 || l.qty > MAX_QTY)
       return erreur(`Quantité invalide pour « ${produit.name} ».`);
@@ -89,6 +95,28 @@ export async function POST(request) {
   }
 
   const total = detail.reduce((s, l) => s + l.prixUnitaire * l.qty, 0);
+
+  // Contrôle du stock sur l'état réel, sans cache : la page d'accueil
+  // affiche un compteur vieux d'au plus une minute, ce qui suffit à
+  // informer mais pas à décider.
+  try {
+    const restant = calculerRestant(products, await listerCommandes());
+    for (const l of detail) {
+      const dispo = restantPour(restant, l.productId, l.size);
+      if (l.qty > dispo) {
+        return erreur(
+          dispo <= 0
+            ? `« ${l.nom} » est épuisé en taille ${l.size}.`
+            : `Il ne reste que ${dispo} « ${l.nom} » en taille ${l.size}.`,
+          409
+        );
+      }
+    }
+  } catch (err) {
+    // Stock incalculable : refuser vaut mieux que survendre.
+    console.error('[commandes] stock illisible :', err);
+    return erreur(indisponible, 503);
+  }
 
   let commande;
   try {

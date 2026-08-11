@@ -14,7 +14,7 @@ import {
   effacerCommande,
 } from '@/libs/pendingOrder';
 
-export default function Boutique({ products }) {
+export default function Boutique({ products, restant }) {
   const [cart, setCart] = useState([]);
 
   const [vue, setVue] = useState(null);
@@ -38,6 +38,11 @@ export default function Boutique({ products }) {
     effacerCommande();
     setVue(null);
   };
+
+  // Mémorise l'envoi côté navigateur pour que l'écran n'invite pas à
+  // recommencer. Le serveur refuse de toute façon un second envoi.
+  const onPreuveEnvoyee = () =>
+    order && ecrireCommande({ ...order, preuveEnvoyee: true });
 
   return (
     <>
@@ -69,6 +74,7 @@ export default function Boutique({ products }) {
               key={p.id}
               product={p}
               cart={cart}
+              restant={restant}
               onAdd={onAdd}
               onInc={onInc}
               onDec={onDec}
@@ -94,6 +100,7 @@ export default function Boutique({ products }) {
         onClose={() => setVue(null)}
         onConfirmed={onConfirmed}
         onTerminer={onTerminer}
+        onPreuveEnvoyee={onPreuveEnvoyee}
       />
     </>
   );

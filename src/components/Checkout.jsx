@@ -25,6 +25,11 @@ const emptyForm = {
 // commande. Tant que le navigateur n'a pas vu de réponse réussie, il
 // renvoie le même — le serveur reconnaît alors le rejeu au lieu de créer
 // un doublon. randomUUID exige un contexte sécurisé, d'où le repli.
+// Doit rester aligné sur TAILLE_MAX de la route d'envoi. Dupliqué plutôt
+// qu'importé : la route est du code serveur, l'importer ferait entrer ses
+// dépendances dans le bundle du navigateur.
+const TAILLE_MAX_PREUVE = 4 * 1024 * 1024;
+
 const nouveauJeton = () =>
   globalThis.crypto?.randomUUID?.() ??
   `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -37,12 +42,16 @@ export default function Checkout({
   onClose,
   onConfirmed,
   onTerminer,
+  onPreuveEnvoyee,
 }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [status, setStatus] = useState('form'); // 'form' | 'processing'
   const [copie, setCopie] = useState(false);
   const [jeton, setJeton] = useState(nouveauJeton);
+  const [fichier, setFichier] = useState(null);
+  const [envoiPreuve, setEnvoiPreuve] = useState(false);
+  const [erreurPreuve, setErreurPreuve] = useState('');
 
   const set = createSet(setForm);
 
@@ -105,6 +114,35 @@ export default function Checkout({
     setStatus('form');
     setJeton(nouveauJeton()); // la commande suivante sera bien distincte
     onConfirmed(data);
+  };
+
+  const envoyerPreuve = async () => {
+    if (!fichier || envoiPreuve) return;
+    setEnvoiPreuve(true);
+    setErreurPreuve('');
+
+    try {
+      const donnees = new FormData();
+      donnees.append('capture', fichier);
+      // Surtout pas d'en-tête Content-Type ici : le navigateur doit poser
+      // lui-même la frontière multipart, sinon le serveur ne sait pas
+      // découper le corps de la requête.
+      const res = await fetch(`/api/commandes/${order.ref}/preuve`, {
+        method: 'POST',
+        body: donnees,
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || `Erreur ${res.status}.`);
+
+      setFichier(null);
+      onPreuveEnvoyee();
+    } catch (err) {
+      console.error('Envoi de la capture impossible :', err);
+      setErreurPreuve(err.message || 'Envoi impossible. Réessaie.');
+    } finally {
+      setEnvoiPreuve(false);
+    }
   };
 
   const handleClose = () => {
@@ -230,6 +268,62 @@ export default function Checkout({
                 M’envoyer ça
               </a>
             </div>
+
+            {order.preuveEnvoyee ? (
+              <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-relaxed text-emerald-800">
+                Capture reçue. Ta commande sera confirmée dès que nous aurons
+                vérifié le virement sur notre relevé.
+              </p>
+            ) : (
+              <div className="mt-4 rounded-xl border border-stone-200 p-4">
+                <p className="text-sm font-semibold text-stone-900">
+                  Une fois le virement envoyé
+                </p>
+                <p className="mt-1 text-xs leading-relaxed text-stone-500">
+                  Joins la capture d’écran de ta confirmation Interac. Elle nous
+                  permet de retrouver ton paiement et d’accélérer la validation.
+                </p>
+
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/heic"
+                  onChange={(e) => {
+                    const choisi = e.target.files?.[0] ?? null;
+                    // Contrôle avant l'envoi : au-delà de la limite, la
+                    // requête serait coupée en route et le client verrait
+                    // une erreur réseau incompréhensible.
+                    if (choisi && choisi.size > TAILLE_MAX_PREUVE) {
+                      setFichier(null);
+                      setErreurPreuve(
+                        'Image trop lourde : 4 Mo maximum. Réduis-la ou fais une capture plus petite.'
+                      );
+                      return;
+                    }
+                    setFichier(choisi);
+                    setErreurPreuve('');
+                  }}
+                  className="mt-3 block w-full cursor-pointer text-xs text-stone-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border file:border-stone-300 file:bg-white file:px-3 file:py-2 file:text-xs file:font-medium file:text-stone-700 hover:file:bg-stone-50"
+                />
+
+                {erreurPreuve && (
+                  <p
+                    role="alert"
+                    className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                  >
+                    {erreurPreuve}
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  onClick={envoyerPreuve}
+                  disabled={!fichier || envoiPreuve}
+                  className="mt-3 w-full cursor-pointer rounded-lg bg-bordeaux-700 py-2.5 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:bg-bordeaux-800 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
+                >
+                  {envoiPreuve ? 'Envoi…' : 'J’ai envoyé mon virement'}
+                </button>
+              </div>
+            )}
 
             <p className="mt-4 text-center text-xs leading-relaxed text-amber-700">
               Notez cette référence avant de fermer : aucun e-mail de

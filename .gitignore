@@ -42,3 +42,6 @@ next-env.d.ts
 
 # Données de commandes (stockage de développement)
 /.data
+
+.vercel
+.env*

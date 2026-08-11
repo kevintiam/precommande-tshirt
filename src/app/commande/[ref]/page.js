@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { CheckCircle2, Clock, XCircle } from 'lucide-react';
+import { CheckCircle2, Clock, Hourglass, XCircle } from 'lucide-react';
 import { lireCommande, STATUTS } from '@/libs/commandes';
 import { formatPrice } from '@/libs/currency';
 
@@ -18,7 +18,14 @@ const AFFICHAGE = {
     couleur: 'text-amber-500',
     titre: 'En attente de paiement',
     texte:
-      'Approuve la demande Interac dans ton application bancaire. Cette page se met à jour une fois le virement reçu.',
+      'Envoie ton virement Interac en indiquant la référence ci-dessous, puis joins ta capture depuis l’écran de commande.',
+  },
+  [STATUTS.A_VERIFIER]: {
+    Icone: Hourglass,
+    couleur: 'text-royal-600',
+    titre: 'Paiement en vérification',
+    texte:
+      'Nous avons bien reçu ta capture. Ta commande sera confirmée dès que le virement aura été vérifié sur notre relevé.',
   },
   [STATUTS.ECHOUEE]: {
     Icone: XCircle,

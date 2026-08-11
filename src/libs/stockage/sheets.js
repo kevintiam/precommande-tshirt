@@ -28,9 +28,10 @@ export const COLONNES = [
   'Mise à jour',
   'Jeton',
   'Détail — ne pas modifier',
+  'Preuve',
 ];
 
-const PLAGE = `${ONGLET}!A2:L`;
+const PLAGE = `${ONGLET}!A2:M`;
 
 const base64url = (valeur) =>
   Buffer.from(valeur)
@@ -120,6 +121,7 @@ const versLigne = (c) => [
   c.majLe ?? '',
   c.clientToken ?? '',
   JSON.stringify(c.lignes),
+  c.preuveUrl ?? '',
 ];
 
 // La colonne « Statut » est saisie à la main par le trésorier, une fois
@@ -138,6 +140,8 @@ const normaliserStatut = (valeur) => {
   if (['payee', 'paye', 'paid', 'recu', 'oui'].includes(v)) return STATUTS.PAYEE;
   if (['echouee', 'echoue', 'annulee', 'annule', 'non'].includes(v))
     return STATUTS.ECHOUEE;
+  if (['a_verifier', 'a verifier', 'verifier', 'declare'].includes(v))
+    return STATUTS.A_VERIFIER;
   return STATUTS.EN_ATTENTE;
 };
 
@@ -163,6 +167,7 @@ const depuisLigne = (r) => {
     majLe: r[9] || null,
     clientToken: r[10] || null,
     lignes,
+    preuveUrl: r[12] || null,
   };
 };
 
@@ -190,11 +195,11 @@ async function assurerOnglet() {
   }
 
   const entetes = await api(
-    `/values/${encodeURIComponent(`${ONGLET}!A1:L1`)}`
+    `/values/${encodeURIComponent(`${ONGLET}!A1:M1`)}`
   );
   if (!entetes.values?.[0]?.length) {
     await api(
-      `/values/${encodeURIComponent(`${ONGLET}!A1:L1`)}?valueInputOption=RAW`,
+      `/values/${encodeURIComponent(`${ONGLET}!A1:M1`)}?valueInputOption=RAW`,
       { method: 'PUT', body: JSON.stringify({ values: [COLONNES] }) }
     );
   }
@@ -218,6 +223,11 @@ export const creerCommande = async (commande) => {
   return commande;
 };
 
+// Une seule requête pour tout le catalogue : le calcul du stock a besoin
+// de l'ensemble des commandes, pas d'une recherche ligne par ligne.
+export const listerCommandes = async () =>
+  (await lireLignes()).map(depuisLigne);
+
 export const lireCommande = async (ref) => {
   const ligne = (await lireLignes()).find((r) => r[0] === ref);
   return ligne ? depuisLigne(ligne) : null;
@@ -230,7 +240,7 @@ export const lireParJeton = async (jeton) => {
 
 const ecrireLigne = async (numero, commande) =>
   api(
-    `/values/${encodeURIComponent(`${ONGLET}!A${numero}:L${numero}`)}` +
+    `/values/${encodeURIComponent(`${ONGLET}!A${numero}:M${numero}`)}` +
       '?valueInputOption=RAW',
     { method: 'PUT', body: JSON.stringify({ values: [versLigne(commande)] }) }
   );
@@ -241,8 +251,11 @@ export const majStatut = async (ref, statut, meta = {}) => {
   if (index < 0) return null;
 
   const commande = depuisLigne(lignes[index]);
-  // Idempotence : une commande déjà tranchée ne rebascule jamais.
-  if (commande.statut !== STATUTS.EN_ATTENTE) return commande;
+  // « payee » et « echouee » sont des états terminaux : une fois la
+  // décision prise au vu du relevé bancaire, rien venant du client ne
+  // peut la défaire. En attente et à vérifier restent modifiables.
+  const terminal = [STATUTS.PAYEE, STATUTS.ECHOUEE].includes(commande.statut);
+  if (terminal) return commande;
 
   const maj = { ...commande, statut, ...meta, majLe: new Date().toISOString() };
   await ecrireLigne(index + 2, maj); // +2 : ligne 1 = en-têtes, index 0-based

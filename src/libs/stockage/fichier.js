@@ -39,6 +39,8 @@ export const creerCommande = async (commande) => {
 
 export const lireCommande = async (ref) => (await lireTout())[ref] ?? null;
 
+export const listerCommandes = async () => Object.values(await lireTout());
+
 export const lireParJeton = async (jeton) =>
   Object.values(await lireTout()).find((c) => c.clientToken === jeton) ?? null;
 
@@ -46,7 +48,9 @@ export const majStatut = async (ref, statut, meta = {}) => {
   const tout = await lireTout();
   const commande = tout[ref];
   if (!commande) return null;
-  if (commande.statut !== STATUTS.EN_ATTENTE) return commande;
+  // Mêmes états terminaux que l'implémentation Sheets.
+  if ([STATUTS.PAYEE, STATUTS.ECHOUEE].includes(commande.statut))
+    return commande;
 
   tout[ref] = { ...commande, statut, ...meta, majLe: new Date().toISOString() };
   await ecrireTout(tout);
