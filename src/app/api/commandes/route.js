@@ -1,18 +1,16 @@
-import { products } from '@/data/products';
+import { creerCommande, lireParJeton, STATUTS } from '@/libs/commandes';
 import {
-  creerCommande,
-  lireParJeton,
-  listerCommandes,
-  STATUTS,
-} from '@/libs/commandes';
-import { taillesDe, calculerRestant, restantPour } from '@/libs/stock';
+  lireCatalogue,
+  reserver,
+  restituer,
+  StockInsuffisant,
+} from '@/libs/catalogue';
+import {
+  isValidEmail,
+  isValidName,
+  validateLignes,
+} from '@/libs/validation';
 
-// Le navigateur peut envoyer n'importe quoi : la validation de
-// src/libs/validation.js tourne côté client et se contourne trivialement.
-// Tout est donc revalidé ici, et le prix est relu depuis le catalogue.
-const MAX_QTY = 20;
-const MAX_LIGNES = 20;
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 // Alphabet sans O/0/I/1/L : la référence est recopiée à la main dans le
 // message du virement Interac, une ambiguïté visuelle coûte un
@@ -32,6 +30,12 @@ const indisponible =
   'Les commandes ne peuvent pas être enregistrées pour le moment. ' +
   'Réessaie dans quelques minutes ou écris-nous.';
 
+const resume = (commande) => ({
+  ref: commande.ref,
+  total: commande.total,
+  email: commande.email,
+});
+
 export async function POST(request) {
   let corps;
   try {
@@ -42,9 +46,15 @@ export async function POST(request) {
 
   const { email, firstName, lastName, lignes, clientToken } = corps ?? {};
 
-  // Avant toute création : cet essai reprend-il une commande déjà passée ?
-  // La lecture touche le stockage, donc elle peut échouer comme
-  // l'écriture — sans ce garde, un stockage cassé renvoyait un 500 nu.
+  // Le navigateur peut envoyer n'importe quoi : la validation du
+  // formulaire tourne côté client et se contourne trivialement. Tout est
+  // revalidé ici, et le prix est relu depuis le catalogue.
+  if (!isValidEmail(email)) return erreur('E-mail invalide.');
+  if (!isValidName(firstName)) return erreur('Prénom requis.');
+  if (!isValidName(lastName)) return erreur('Nom requis.');
+
+  // Un rejeu du même jeton reprend la commande existante au lieu d'en
+  // créer une seconde — et surtout, sans redécrémenter le stock.
   if (typeof clientToken === 'string' && clientToken) {
     try {
       const dejaVue = await lireParJeton(clientToken);
@@ -58,94 +68,77 @@ export async function POST(request) {
     }
   }
 
-  if (typeof email !== 'string' || !EMAIL_RE.test(email))
-    return erreur('E-mail invalide.');
-  if (typeof firstName !== 'string' || !firstName.trim())
-    return erreur('Prénom requis.');
-  if (typeof lastName !== 'string' || !lastName.trim())
-    return erreur('Nom requis.');
-  if (!Array.isArray(lignes) || lignes.length === 0)
-    return erreur('Votre panier est vide.');
-  if (lignes.length > MAX_LIGNES)
-    return erreur('Trop d’articles distincts dans cette commande.');
+  let catalogue;
+  try {
+    catalogue = await lireCatalogue();
+  } catch (err) {
+    // Sans catalogue, impossible de connaître ni les prix ni le stock.
+    console.error('[commandes] catalogue illisible :', err);
+    return erreur(indisponible, 503);
+  }
 
-  const detail = [];
-  const vues = new Set();
+  const refus = validateLignes(lignes, catalogue);
+  if (refus) return erreur(refus);
 
-  for (const l of lignes) {
-    const produit = products.find((p) => p.id === l?.productId);
-    if (!produit) return erreur('Cette commande contient un article inconnu.');
-    if (!taillesDe(produit).includes(l.size))
-      return erreur(`Taille indisponible pour « ${produit.name} ».`);
-    if (!Number.isInteger(l.qty) || l.qty < 1 || l.qty > MAX_QTY)
-      return erreur(`Quantité invalide pour « ${produit.name} ».`);
-
-    const cle = `${produit.id}::${l.size}`;
-    if (vues.has(cle))
-      return erreur(`« ${produit.name} » apparaît deux fois en taille ${l.size}.`);
-    vues.add(cle);
-
-    detail.push({
+  // Le panier est valide : on le recopie depuis le CATALOGUE, jamais
+  // depuis la requête. Le nom et le prix enregistrés sont donc les nôtres,
+  // quoi qu'ait envoyé le navigateur.
+  const detail = lignes.map((l) => {
+    const produit = catalogue.find((p) => p.id === l.productId);
+    return {
       productId: produit.id,
       nom: produit.name,
       size: l.size,
       qty: l.qty,
       prixUnitaire: produit.price,
-    });
-  }
+    };
+  });
 
   const total = detail.reduce((s, l) => s + l.prixUnitaire * l.qty, 0);
 
-  // Contrôle du stock sur l'état réel, sans cache : la page d'accueil
-  // affiche un compteur vieux d'au plus une minute, ce qui suffit à
-  // informer mais pas à décider.
+  // Réservation du stock AVANT l'enregistrement : c'est l'opération
+  // atomique, donc le seul point où la survente peut être empêchée.
   try {
-    const restant = calculerRestant(products, await listerCommandes());
-    for (const l of detail) {
-      const dispo = restantPour(restant, l.productId, l.size);
-      if (l.qty > dispo) {
-        return erreur(
-          dispo <= 0
-            ? `« ${l.nom} » est épuisé en taille ${l.size}.`
-            : `Il ne reste que ${dispo} « ${l.nom} » en taille ${l.size}.`,
-          409
-        );
-      }
+    await reserver(detail);
+  } catch (err) {
+    if (err instanceof StockInsuffisant) {
+      const { nom, size } = err.ligne;
+      return erreur(
+        err.dispo <= 0
+          ? `« ${nom} » est épuisé en taille ${size}.`
+          : `Il ne reste que ${err.dispo} « ${nom} » en taille ${size}.`,
+        409
+      );
     }
-  } catch (err) {
-    // Stock incalculable : refuser vaut mieux que survendre.
-    console.error('[commandes] stock illisible :', err);
+    console.error('[commandes] réservation impossible :', err);
     return erreur(indisponible, 503);
   }
 
-  let commande;
+  const commande = {
+    ref: genererReference(),
+    clientToken: clientToken ?? null,
+    date: new Date().toISOString(),
+    email: email.trim(),
+    firstName: firstName.trim(),
+    lastName: lastName.trim(),
+    lignes: detail,
+    total,
+    statut: STATUTS.EN_ATTENTE,
+  };
+
   try {
-    commande = await creerCommande({
-      ref: genererReference(),
-      clientToken: clientToken ?? null,
-      date: new Date().toISOString(),
-      email: email.trim(),
-      firstName: firstName.trim(),
-      lastName: lastName.trim(),
-      lignes: detail,
-      total,
-      statut: STATUTS.EN_ATTENTE,
-    });
+    await creerCommande(commande);
   } catch (err) {
-    // Sans enregistrement, accepter la commande reviendrait à encaisser
-    // un virement dont on ne saurait rien. On refuse franchement.
+    // Le stock est déjà décrémenté mais la commande n'existe pas : sans
+    // cette restitution, les articles resteraient bloqués pour toujours.
     console.error('[commandes] enregistrement impossible :', err);
+    try {
+      await restituer(detail);
+    } catch (err2) {
+      console.error('[commandes] restitution du stock impossible :', err2);
+    }
     return erreur(indisponible, 503);
   }
 
-  // Le paiement se fait hors du site : le client repart avec l'adresse
-  // Interac, le montant et sa référence, puis envoie son virement depuis
-  // sa banque. Le statut est ensuite passé à « payee » dans la feuille.
   return Response.json(resume(commande));
 }
-
-const resume = (commande) => ({
-  ref: commande.ref,
-  total: commande.total,
-  email: commande.email,
-});

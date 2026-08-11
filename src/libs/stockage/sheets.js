@@ -194,14 +194,23 @@ async function assurerOnglet() {
     });
   }
 
-  const entetes = await api(
-    `/values/${encodeURIComponent(`${ONGLET}!A1:M1`)}`
-  );
-  if (!entetes.values?.[0]?.length) {
+  const entetes = await api(`/values/${encodeURIComponent(`${ONGLET}!A1:M1`)}`);
+  const posees = entetes.values?.[0]?.length ?? 0;
+
+  // On complète uniquement les en-têtes manquants, jamais ceux qui sont
+  // déjà là : une feuille existante peut avoir été renommée à la main, et
+  // réécrire toute la ligne effacerait ce travail. Sans ce rattrapage,
+  // une colonne ajoutée après coup reste anonyme (« Column 13 »).
+  if (posees < COLONNES.length) {
+    const premiere = String.fromCharCode(65 + posees); // 0 → A, 12 → M
+    const derniere = String.fromCharCode(65 + COLONNES.length - 1);
     await api(
-      `/values/${encodeURIComponent(`${ONGLET}!A1:M1`)}?valueInputOption=RAW`,
-      { method: 'PUT', body: JSON.stringify({ values: [COLONNES] }) }
+      `/values/${encodeURIComponent(
+        `${ONGLET}!${premiere}1:${derniere}1`
+      )}?valueInputOption=RAW`,
+      { method: 'PUT', body: JSON.stringify({ values: [COLONNES.slice(posees)] }) }
     );
+    console.warn('[sheets] %d en-tête(s) complété(s)', COLONNES.length - posees);
   }
 
   ongletVerifie = true;

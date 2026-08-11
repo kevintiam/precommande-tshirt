@@ -14,7 +14,7 @@ import {
   effacerCommande,
 } from '@/libs/pendingOrder';
 
-export default function Boutique({ products, restant }) {
+export default function Boutique({ products }) {
   const [cart, setCart] = useState([]);
 
   const [vue, setVue] = useState(null);
@@ -74,7 +74,6 @@ export default function Boutique({ products, restant }) {
               key={p.id}
               product={p}
               cart={cart}
-              restant={restant}
               onAdd={onAdd}
               onInc={onInc}
               onDec={onDec}

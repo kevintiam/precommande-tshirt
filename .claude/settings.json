@@ -91,7 +91,23 @@
       "Bash(curl -s -X POST localhost:3141/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"e@t.ca\",\"firstName\":\"E\",\"lastName\":\"T\",\"clientToken\":\"ep-1\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":15}]}' -w \" [%{http_code}]\")",
       "Bash(curl -s -w \" [%{http_code}]\" -X POST localhost:3141/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"e@t.ca\",\"firstName\":\"E\",\"lastName\":\"T\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":1}]}')",
       "Bash(curl -s -w \" [%{http_code}]\" -X POST localhost:3141/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"e@t.ca\",\"firstName\":\"E\",\"lastName\":\"T\",\"clientToken\":\"ep-2\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"L\",\"qty\":1}]}')",
-      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-4\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; Remove-Item -Recurse -Force \"c:\\\\Users\\\\tiamk\\\\Desktop\\\\e-commerce\\\\camp_reveil\\\\.data\" -ErrorAction SilentlyContinue; \"nettoye\")"
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-4\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; Remove-Item -Recurse -Force \"c:\\\\Users\\\\tiamk\\\\Desktop\\\\e-commerce\\\\camp_reveil\\\\.data\" -ErrorAction SilentlyContinue; \"nettoye\")",
+      "Bash(node -p \"'mongodb ' + require\\('./node_modules/mongodb/package.json'\\).version\")",
+      "Bash(node tmp-mongo-rs.mjs)",
+      "Bash(curl -s -m 20 -w \" [%{http_code}]\" -X POST localhost:3150/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"c@t.ca\",\"firstName\":\"C\",\"lastName\":\"T\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"L\",\"qty\":2},{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":1}]}')",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-10\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; cd \"c:\\\\Users\\\\tiamk\\\\Desktop\\\\e-commerce\\\\camp_reveil\"; Remove-Item -Force tmp-mongo-rs.mjs, tmp-uri.txt -ErrorAction SilentlyContinue; npm uninstall -D mongodb-memory-server 2>&1 | Select-Object -Last 2)",
+      "Bash(node -p \"JSON.stringify\\(require\\('./package.json'\\).dependencies,null,1\\)\")",
+      "Bash(MONGODB_DB=verif_jetable GOOGLE_SHEETS_ID= GOOGLE_SERVICE_ACCOUNT_EMAIL= GOOGLE_PRIVATE_KEY= npx next start -p 3160)",
+      "Bash(curl -s -m 30 -w \" [%{http_code}]\" -X POST localhost:3160/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"v@t.ca\",\"firstName\":\"V\",\"lastName\":\"T\",\"clientToken\":\"v1\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":14}]}')",
+      "Bash(curl -s -m 30 -X POST localhost:3160/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"a@t.ca\",\"firstName\":\"A\",\"lastName\":\"T\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":1}]}' -o /tmp/a.json -w \"  A -> %{http_code}\\\\n\")",
+      "Bash(curl -s -m 30 -X POST localhost:3160/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"b@t.ca\",\"firstName\":\"B\",\"lastName\":\"T\",\"lignes\":[{\"productId\":\"tee-blanc-degrade\",\"size\":\"M\",\"qty\":1}]}' -o /tmp/b.json -w \"  B -> %{http_code}\\\\n\")",
+      "Bash(wait)",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-8\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; \"arrete\")",
+      "Bash(MONGODB_DB=verif_jetable npx next start -p 3161)",
+      "Bash(curl -s -m 40 -w \" [%{http_code}]\" -X POST localhost:3161/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"miroir@test.ca\",\"firstName\":\"Miroir\",\"lastName\":\"Verif\",\"clientToken\":\"mir-1\",\"lignes\":[{\"productId\":\"tote-disciple\",\"size\":\"Unique\",\"qty\":1}]}')",
+      "Bash(curl -s -m 40 -o /dev/null -w \"  GET / -> HTTP %{http_code}\\\\n\" localhost:3161/)",
+      "Bash(node tmp-verif-sheet.mjs CR-4D6SFR)",
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-15\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; \"arrete\")"
     ]
   }
 }

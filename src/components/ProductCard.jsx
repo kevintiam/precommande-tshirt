@@ -2,14 +2,7 @@ import Image from 'next/image';
 import ProductActions from '@/components/ProductActions';
 import { formatPrice } from '@/libs/currency';
 
-export default function ProductCard({
-  product,
-  cart,
-  restant,
-  onAdd,
-  onInc,
-  onDec,
-}) {
+export default function ProductCard({ product, cart, onAdd, onInc, onDec }) {
   return (
     <article className="flex gap-4 border-b border-stone-200 py-6 last:border-b-0">
       <Image
@@ -41,7 +34,6 @@ export default function ProductCard({
         <ProductActions
           product={product}
           cart={cart}
-          restant={restant}
           onAdd={onAdd}
           onInc={onInc}
           onDec={onDec}

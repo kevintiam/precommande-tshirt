@@ -3,23 +3,16 @@
 import { useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
 import { lineId, findLine } from '@/libs/cart';
-import { taillesDe, restantPour } from '@/libs/stock';
+import { taillesDe, restantPour } from '@/libs/produit';
 
-export default function ProductActions({
-  product,
-  cart,
-  restant,
-  onAdd,
-  onInc,
-  onDec,
-}) {
+export default function ProductActions({ product, cart, onAdd, onInc, onDec }) {
   const tailles = taillesDe(product);
 
-  // `restant` peut être absent : lecture du stock impossible au rendu.
-  // On ne bloque alors rien à l'affichage — le serveur reste seul juge
-  // au moment de la commande.
-  const stockConnu = Boolean(restant);
-  const dispo = (t) => (stockConnu ? restantPour(restant, product.id, t) : null);
+  // `product.restant` est absent quand MongoDB n'est pas configuré. On ne
+  // bloque alors rien à l'affichage — le serveur reste seul juge au
+  // moment de la commande.
+  const stockConnu = Boolean(product.restant);
+  const dispo = (t) => restantPour(product, t);
 
   // On présélectionne la première taille encore disponible plutôt que la
   // première tout court : proposer d'emblée une taille épuisée oblige le
