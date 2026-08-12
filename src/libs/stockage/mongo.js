@@ -57,6 +57,7 @@ export async function amorcerCatalogue() {
           description: p.description,
           price: p.price,
           image: p.image,
+          images: p.images ?? [p.image],
           ...(p.imagePosition ? { imagePosition: p.imagePosition } : {}),
           stock: Object.fromEntries(
             Object.entries(p.stock ?? {}).map(([taille, quantite]) => [
@@ -70,7 +71,17 @@ export async function amorcerCatalogue() {
     },
   }));
 
-  if (operations.length) await produits.bulkWrite(operations);
+  // Comble les champs ajoutés APRÈS la création d'un document. Le filtre
+  // `$exists: false` fait que ces mises à jour ne touchent que ce qui
+  // manque : ni les prix, ni les stocks ajustés à la main ne bougent.
+  const rattrapages = catalogueInitial.map((p) => ({
+    updateOne: {
+      filter: { _id: p.id, images: { $exists: false } },
+      update: { $set: { images: p.images ?? [p.image] } },
+    },
+  }));
+
+  if (operations.length) await produits.bulkWrite([...operations, ...rattrapages]);
 }
 
 // Le catalogue tel que l'affiche la boutique. `stock` y est aplati en
@@ -88,6 +99,9 @@ export async function listerProduits() {
       description: d.description,
       price: d.price,
       image: d.image,
+      // Documents créés avant l'ajout de la galerie : on retombe sur la
+      // vignette seule plutôt que de renvoyer un tableau vide.
+      images: d.images?.length ? d.images : [d.image],
       stock: {},
       restant: {},
     };

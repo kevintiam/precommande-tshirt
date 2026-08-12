@@ -21,6 +21,9 @@ export const products = [
       'La version sobre du t-shirt bordeaux : logo IMPACT et ovale « CAMP ADN » imprimés en blanc.',
     price: 30,
     image: '/images/03.PNG',
+    // `image` sert de vignette, `images` alimente la visionneuse.
+    // Facultatif : sans lui, la visionneuse n'affiche que `image`.
+    images: ['/images/03.PNG', '/images/02.PNG'],
     stock: { M: 15, L: 20, XL: 15 },
   },
   {
@@ -104,7 +107,7 @@ export const products = [
     name: 'Tote bag DISCIPLE',
     description:
       'Sac fourre-tout en toile blanche, anses longues. « DISCIPLE » imprimé en grand, dégradé rouge à bleu.',
-    price: 20,
+    price: 12,
     image: '/images/tote-bag.jpeg',
     stock: { Unique: 30 },
   },

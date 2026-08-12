@@ -1,19 +1,11 @@
-import Image from 'next/image';
+import ProductImage from '@/components/ProductImage';
 import ProductActions from '@/components/ProductActions';
 import { formatPrice } from '@/libs/currency';
 
 export default function ProductCard({ product, cart, onAdd, onInc, onDec }) {
   return (
     <article className="flex gap-4 border-b border-stone-200 py-6 last:border-b-0">
-      <Image
-        src={product.image}
-        alt={product.name}
-        width={88}
-        height={110}
-        className={`h-27.5 w-22 flex-none rounded-lg bg-stone-100 object-cover ${
-          product.imagePosition === 'left' ? 'object-left' : ''
-        }`}
-      />
+      <ProductImage product={product} />
 
       <div className="min-w-0 flex-1">
         {/* Nom et prix sur la même ligne : l'œil balaie une seule colonne
