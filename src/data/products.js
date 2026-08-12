@@ -87,7 +87,8 @@ export const products = [
     description:
       'La même impression recto-verso sur fond blanc, avec « à l’image de Dieu » au dos. Le dégradé rouge à bleu ressort pleinement.',
     price: 30,
-    image: '/images/10.PNG',
+    // image: '/images/10.PNG',
+    images: ['/images/10-1.PNG', '/images/10-2.PNG'],
     imagePosition: 'left',
     stock: { M: 15, L: 20, XL: 15 },
   },

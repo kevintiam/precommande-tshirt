@@ -42,46 +42,68 @@ export class StockInsuffisant extends Error {
   }
 }
 
-// Amorce le catalogue depuis src/data/products.js sans jamais écraser
-// l'existant : $setOnInsert garantit qu'un prix corrigé ou un stock
-// ajusté dans Mongo survit à tous les déploiements suivants.
+// Synchronise le catalogue depuis src/data/products.js.
+//
+// Le partage des rôles :
+//   src/data/products.js  → le CONTENU (nom, description, prix, images,
+//                           quantités initiales). Il écrase Mongo à chaque
+//                           démarrage : une seule source, pas de divergence.
+//   MongoDB               → `restant`, le seul chiffre vivant. Jamais
+//                           réécrit, sinon un déploiement remettrait le
+//                           stock à neuf en pleine vente.
 export async function amorcerCatalogue() {
   const produits = await produitsCol();
+  const operations = [];
 
-  const operations = catalogueInitial.map((p) => ({
-    updateOne: {
-      filter: { _id: p.id },
-      update: {
-        $setOnInsert: {
-          name: p.name,
-          description: p.description,
-          price: p.price,
-          image: p.image,
-          images: p.images ?? [p.image],
-          ...(p.imagePosition ? { imagePosition: p.imagePosition } : {}),
-          stock: Object.fromEntries(
-            Object.entries(p.stock ?? {}).map(([taille, quantite]) => [
-              taille,
-              { initial: quantite, restant: quantite },
-            ])
-          ),
+  for (const p of catalogueInitial) {
+    const images = p.images?.length ? p.images : p.image ? [p.image] : [];
+    // `image` reste la vignette. S'il est absent, on prend la première de
+    // la galerie plutôt que de laisser un champ vide.
+    const vignette = p.image ?? images[0];
+
+    operations.push({
+      updateOne: {
+        filter: { _id: p.id },
+        update: {
+          $set: {
+            name: p.name,
+            description: p.description,
+            price: p.price,
+            image: vignette,
+            images,
+            ...(p.imagePosition ? { imagePosition: p.imagePosition } : {}),
+          },
+          // Un `imagePosition` retiré du fichier doit disparaître aussi
+          // du document, sinon le recadrage resterait collé au produit.
+          ...(p.imagePosition ? {} : { $unset: { imagePosition: '' } }),
         },
+        upsert: true,
       },
-      upsert: true,
-    },
-  }));
+    });
 
-  // Comble les champs ajoutés APRÈS la création d'un document. Le filtre
-  // `$exists: false` fait que ces mises à jour ne touchent que ce qui
-  // manque : ni les prix, ni les stocks ajustés à la main ne bougent.
-  const rattrapages = catalogueInitial.map((p) => ({
-    updateOne: {
-      filter: { _id: p.id, images: { $exists: false } },
-      update: { $set: { images: p.images ?? [p.image] } },
-    },
-  }));
+    for (const [taille, quantite] of Object.entries(p.stock ?? {})) {
+      // Taille nouvelle : on crée `initial` ET `restant`.
+      operations.push({
+        updateOne: {
+          filter: { _id: p.id, [`stock.${taille}`]: { $exists: false } },
+          update: {
+            $set: { [`stock.${taille}`]: { initial: quantite, restant: quantite } },
+          },
+        },
+      });
+      // Taille déjà connue : seul `initial` suit le fichier.
+      operations.push({
+        updateOne: {
+          filter: { _id: p.id, [`stock.${taille}`]: { $exists: true } },
+          update: { $set: { [`stock.${taille}.initial`]: quantite } },
+        },
+      });
+    }
+  }
 
-  if (operations.length) await produits.bulkWrite([...operations, ...rattrapages]);
+  // `ordered` est indispensable : la création du document doit précéder
+  // les mises à jour de son stock.
+  if (operations.length) await produits.bulkWrite(operations, { ordered: true });
 }
 
 // Le catalogue tel que l'affiche la boutique. `stock` y est aplati en
