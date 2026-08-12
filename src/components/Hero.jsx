@@ -45,7 +45,7 @@ export default function Hero() {
 
           <div className="mt-6 space-y-2 text-sm text-bordeaux-100">
             <p className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 flex-none" />8 au 11 août 2026
+              <Calendar className="h-4 w-4 flex-none" />9 au 11 Octobre 2026
             </p>
             <a
               href={MAP_URL}
