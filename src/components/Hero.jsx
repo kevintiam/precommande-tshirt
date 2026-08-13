@@ -30,14 +30,14 @@ export default function Hero() {
             zone claire de l'image en dessous. */}
         <div className="absolute inset-0 -z-10 bg-linear-to-br from-bordeaux-950/95 via-bordeaux-800/85 to-bordeaux-700/75" />
 
-        <div className="px-6 py-12 text-white sm:px-10 sm:py-16">
+        <div className="px-6 py-12 text-white sm:px-16 sm:py-28">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-bordeaux-200">
             Précommande · Édition 2026
           </p>
 
-          <h1 className="mt-4 font-display text-4xl uppercase leading-[0.92] drop-shadow-sm sm:text-5xl">
+          <h1 className="mt-4 font-display text-4xl uppercase  tracking-wide leading-[0.92] drop-shadow-sm sm:text-5xl">
             Boutique officielle
-            <span className="block text-bordeaux-200">Camp Impact ADN</span>
+            <span className="mt-2 block text-bordeaux-200">Camp Impact ADN</span>
           </h1>
 
           {/* Reprise du dégradé rouge → bleu imprimé sur les vêtements. */}

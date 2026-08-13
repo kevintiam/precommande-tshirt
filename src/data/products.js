@@ -21,8 +21,6 @@ export const products = [
       'La version sobre du t-shirt bordeaux : logo IMPACT et ovale « CAMP ADN » imprimés en blanc.',
     price: 30,
     image: '/images/03.PNG',
-    // `image` sert de vignette, `images` alimente la visionneuse.
-    // Facultatif : sans lui, la visionneuse n'affiche que `image`.
     images: ['/images/03.PNG', '/images/02.PNG'],
     stock: { M: 15, L: 20, XL: 15 },
   },
@@ -133,6 +131,28 @@ export const products = [
       'Sweat à capuche noir. « DISCIPLE » sur le devant et « à l’image de Dieu » au dos, où le dégradé rouge à bleu éclate sur le fond sombre.',
     price: 50,
     images: ['/images/14-1.jpeg', '/images/14-2.jpeg'],
+    stock: { M: 15, L: 20, XL: 15 },
+  },
+
+  // T-shirts « Made to be like Christ » : flamme brodée à la poitrine
+  // devant, lettrage calligraphié au dos. Même remarque que les hoodies
+  // ci-dessus — deux vues d'un même vêtement, recadrage centré.
+  {
+    id: 'tee-christ-blanc',
+    name: 'T-shirt CHRIST — Blanc',
+    description:
+      'T-shirt blanc coupe oversize, col rond côtelé. Flamme rouge à bleu sur la poitrine, « Made to be like Christ » calligraphié en grand au dos.',
+    price: 30,
+    images: ['/images/15-1.jpeg', '/images/15-2.jpeg'],
+    stock: { M: 15, L: 20, XL: 15 },
+  },
+  {
+    id: 'tee-christ-bleu',
+    name: 'T-shirt CHRIST — Bleu roi',
+    description:
+      'La même pièce en bleu roi. Le lettrage « Made to be like Christ » ressort en orange vif sur le fond profond.',
+    price: 30,
+    images: ['/images/16-1.jpeg', '/images/16-2.jpeg'],
     stock: { M: 15, L: 20, XL: 15 },
   },
 
