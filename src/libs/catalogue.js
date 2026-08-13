@@ -22,5 +22,13 @@ export const reserver = (lignes) =>
 export const restituer = (lignes) =>
   mongo.configure ? mongo.restituer(lignes) : Promise.resolve();
 
-export const marquerLibere = (ref) =>
-  mongo.configure ? mongo.marquerLibere(ref) : Promise.resolve(false);
+// Sans MongoDB il n'y a pas de stock à tenir : « rien à prélever, rien
+// de pris » est la réponse qui laisse tout le monde tranquille.
+export const marquerPreleve = (ref) =>
+  mongo.configure ? mongo.marquerPreleve(ref) : Promise.resolve(false);
+
+export const oublierPreleve = (ref) =>
+  mongo.configure ? mongo.oublierPreleve(ref) : Promise.resolve();
+
+export const estPreleve = (ref) =>
+  mongo.configure ? mongo.estPreleve(ref) : Promise.resolve(false);

@@ -1,4 +1,4 @@
-import { taillesDe } from '@/libs/produit';
+import { taillesDe, restantPour } from '@/libs/produit';
 
 // Bornes d'une commande. Elles vivent ici et non dans la route, pour que
 // la règle et son contrôle ne puissent pas diverger.
@@ -55,6 +55,17 @@ export const validateLignes = (lignes, catalogue) => {
 
     if (!Number.isInteger(l.qty) || l.qty < 1 || l.qty > MAX_QTY)
       return `Quantité invalide pour « ${produit.name} ».`;
+
+    // Disponibilité au moment de la commande. Ce contrôle ne RÉSERVE
+    // rien — le stock n'est retenu qu'à la déclaration de paiement — il
+    // évite seulement d'annoncer un virement à quelqu'un qui n'aura
+    // manifestement pas son article. `null` = stock inconnu, on ne juge pas.
+    const restant = restantPour(produit, l.size);
+    if (restant !== null && l.qty > restant) {
+      return restant <= 0
+        ? `« ${produit.name} » est épuisé en taille ${l.size}.`
+        : `Il ne reste que ${restant} « ${produit.name} » en taille ${l.size}.`;
+    }
 
     // Deux lignes identiques contourneraient MAX_QTY en additionnant
     // leurs quantités sur une même taille.

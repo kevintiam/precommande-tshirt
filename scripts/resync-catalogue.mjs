@@ -12,19 +12,10 @@
 
 import { register } from 'node:module';
 import { pathToFileURL } from 'node:url';
-import { readFileSync } from 'node:fs';
+import { chargerEnv } from './env.mjs';
 
 register('./scripts/alias.mjs', pathToFileURL('./'));
-
-// Charge .env.local comme le fait Next : ce script tourne hors de Next.
-for (const ligne of readFileSync('.env.local', 'utf8').split('\n')) {
-  const separateur = ligne.indexOf('=');
-  if (separateur < 1 || ligne.startsWith('#')) continue;
-  const cle = ligne.slice(0, separateur).trim();
-  let valeur = ligne.slice(separateur + 1).trim();
-  if (valeur.startsWith('"') && valeur.endsWith('"')) valeur = valeur.slice(1, -1);
-  process.env[cle] ??= valeur;
-}
+chargerEnv();
 
 if (!process.env.MONGODB_URI) {
   console.error('MONGODB_URI absente de .env.local — rien à faire.');

@@ -10,3 +10,9 @@ export const taillesDe = (produit) => Object.keys(produit?.stock ?? {});
 // alors aucun compteur et ne bloque rien.
 export const restantPour = (produit, taille) =>
   produit?.restant ? (produit.restant[taille] ?? 0) : null;
+
+// Épuisé = plus une seule taille disponible. Un stock inconnu ne compte
+// jamais comme épuisé : sans MongoDB, on n'affirme rien.
+export const estEpuise = (produit) =>
+  Boolean(produit?.restant) &&
+  taillesDe(produit).every((t) => restantPour(produit, t) <= 0);

@@ -12,14 +12,28 @@ export const cartTotal = (cart) =>
 export const findLine = (cart, productId, size) =>
   cart.find((i) => i.product.id === productId && i.size === size);
 
-export const addLine = (cart, product, size) =>
-  findLine(cart, product.id, size)
-    ? incLine(cart, lineId(product.id, size))
-    : [...cart, { product, size, qty: 1 }];
+// Plafond de stock. `max` est la quantité encore disponible pour cette
+// taille, ou null quand le stock est inconnu (MongoDB non configuré) —
+// on ne bloque alors rien, le serveur reste seul juge.
+//
+// Ce test vit ici, et pas seulement dans le `disabled` d'un bouton :
+// l'attribut décrit l'état de l'écran, il n'empêche pas la quantité de
+// monter. Tant que la règle n'est écrite qu'une fois, à l'endroit qui
+// fabrique le panier, aucun chemin d'ajout ne peut la contourner.
+const admis = (qty, max) => max == null || qty <= max;
 
-export const incLine = (cart, id) =>
+export const addLine = (cart, product, size, max = null) =>
+  findLine(cart, product.id, size)
+    ? incLine(cart, lineId(product.id, size), max)
+    : admis(1, max)
+      ? [...cart, { product, size, qty: 1 }]
+      : cart;
+
+export const incLine = (cart, id, max = null) =>
   cart.map((i) =>
-    lineId(i.product.id, i.size) === id ? { ...i, qty: i.qty + 1 } : i
+    lineId(i.product.id, i.size) === id && admis(i.qty + 1, max)
+      ? { ...i, qty: i.qty + 1 }
+      : i
   );
 
 // Passer sous 1 retire la ligne du panier.

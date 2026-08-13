@@ -1,10 +1,5 @@
 import { creerCommande, lireParJeton, STATUTS } from '@/libs/commandes';
-import {
-  lireCatalogue,
-  reserver,
-  restituer,
-  StockInsuffisant,
-} from '@/libs/catalogue';
+import { lireCatalogue } from '@/libs/catalogue';
 import {
   isValidEmail,
   isValidName,
@@ -96,24 +91,12 @@ export async function POST(request) {
 
   const total = detail.reduce((s, l) => s + l.prixUnitaire * l.qty, 0);
 
-  // Réservation du stock AVANT l'enregistrement : c'est l'opération
-  // atomique, donc le seul point où la survente peut être empêchée.
-  try {
-    await reserver(detail);
-  } catch (err) {
-    if (err instanceof StockInsuffisant) {
-      const { nom, size } = err.ligne;
-      return erreur(
-        err.dispo <= 0
-          ? `« ${nom} » est épuisé en taille ${size}.`
-          : `Il ne reste que ${err.dispo} « ${nom} » en taille ${size}.`,
-        409
-      );
-    }
-    console.error('[commandes] réservation impossible :', err);
-    return erreur(indisponible, 503);
-  }
-
+  // Le stock n'est PAS décrémenté ici. Il ne part qu'à la déclaration de
+  // paiement (POST .../preuve), pour qu'un panier abandonné ne retienne
+  // jamais d'article. `validateLignes` a vérifié la disponibilité juste
+  // au-dessus, mais sans rien réserver : c'est un avertissement, pas une
+  // garantie. La seule barrière contre la survente est la réservation
+  // atomique du côté de la preuve.
   const commande = {
     ref: genererReference(),
     clientToken: clientToken ?? null,
@@ -129,14 +112,8 @@ export async function POST(request) {
   try {
     await creerCommande(commande);
   } catch (err) {
-    // Le stock est déjà décrémenté mais la commande n'existe pas : sans
-    // cette restitution, les articles resteraient bloqués pour toujours.
+    // Aucun stock à restituer : rien n'a été décrémenté à ce stade.
     console.error('[commandes] enregistrement impossible :', err);
-    try {
-      await restituer(detail);
-    } catch (err2) {
-      console.error('[commandes] restitution du stock impossible :', err2);
-    }
     return erreur(indisponible, 503);
   }
 

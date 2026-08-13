@@ -1,5 +1,12 @@
 import { put } from '@vercel/blob';
 import { lireCommande, majStatut, STATUTS } from '@/libs/commandes';
+import {
+  reserver,
+  restituer,
+  marquerPreleve,
+  oublierPreleve,
+  StockInsuffisant,
+} from '@/libs/catalogue';
 
 // Envoi de la capture du virement par le client.
 //
@@ -7,6 +14,13 @@ import { lireCommande, majStatut, STATUTS } from '@/libs/commandes';
 // Cette route ne fait donc JAMAIS passer une commande à « payee ». Elle
 // la place à « a_verifier », c'est-à-dire « le client dit avoir payé,
 // va regarder ton relevé ». La décision reste humaine.
+//
+// C'est AUSSI ici que le stock est décrémenté, et nulle part ailleurs :
+// une commande créée mais jamais réglée ne doit retenir aucun article.
+// Le prix de ce choix est qu'entre la commande et cet envoi, rien n'est
+// retenu — deux clients peuvent viser le dernier exemplaire et le second
+// se voir refuser après avoir viré l'argent. D'où le message ci-dessous,
+// qui renvoie vers les organisateurs plutôt que de clore la porte.
 //
 // Le point d'entrée est public : n'importe qui connaissant une référence
 // peut poster. D'où les bornes ci-dessous.
@@ -70,6 +84,44 @@ export async function POST(request, { params }) {
     return erreur('Image trop lourde : 4 Mo maximum.');
   }
 
+  // Prélèvement AVANT l'envoi du fichier : c'est l'opération atomique,
+  // donc le seul point où la survente peut être empêchée. La faire en
+  // premier évite aussi de laisser un blob orphelin derrière un refus.
+  const lignes = commande.lignes ?? [];
+  const aPrelever = await marquerPreleve(ref).catch((err) => {
+    console.error('[preuve] registre illisible :', err);
+    return null; // ni vrai ni faux : on ne touchera pas au stock
+  });
+
+  if (aPrelever === null) {
+    return erreur('Service indisponible, réessaie dans quelques minutes.', 503);
+  }
+
+  if (aPrelever) {
+    try {
+      await reserver(lignes);
+    } catch (err) {
+      // La marque est retirée : sinon la commande passerait pour servie
+      // alors que son stock n'a jamais bougé, et un échec ultérieur
+      // rendrait des articles qui n'ont jamais été pris.
+      await oublierPreleve(ref).catch(() => {});
+
+      if (err instanceof StockInsuffisant) {
+        const { nom, size } = err.ligne;
+        console.warn('[preuve] stock manquant sur %s : %s (%s)', ref, nom, size);
+        return erreur(
+          `« ${nom} » n’est plus disponible en taille ${size}. ` +
+            'Si tu as déjà fait le virement, écris-nous avec ta référence ' +
+            `${ref} : on te rembourse ou on te trouve une autre taille.`,
+          409
+        );
+      }
+
+      console.error('[preuve] prélèvement impossible :', err);
+      return erreur('Service indisponible, réessaie dans quelques minutes.', 503);
+    }
+  }
+
   try {
     // Le nom vient de nous, jamais du client : un nom de fichier fourni
     // par le navigateur peut contenir des séparateurs de chemin.
@@ -83,7 +135,18 @@ export async function POST(request, { params }) {
     await majStatut(ref, STATUTS.A_VERIFIER, { preuveUrl: blob.url });
     return Response.json({ statut: STATUTS.A_VERIFIER });
   } catch (err) {
+    // Le stock est parti mais la commande est restée « en attente » :
+    // sans cette compensation, les articles resteraient bloqués et le
+    // client, qui verra une erreur, réessaierait sur un stock amputé.
     console.error('[preuve] envoi impossible :', err);
+    if (aPrelever) {
+      try {
+        await restituer(lignes);
+        await oublierPreleve(ref);
+      } catch (err2) {
+        console.error('[preuve] restitution du stock impossible :', err2);
+      }
+    }
     return erreur('Envoi impossible. Réessaie dans quelques minutes.', 503);
   }
 }

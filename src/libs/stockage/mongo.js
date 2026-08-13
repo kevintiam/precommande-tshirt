@@ -251,15 +251,43 @@ export async function restituer(lignes) {
   }
 }
 
-// Journal des restitutions déjà faites : la libération est déclenchée par
-// une relecture périodique de la feuille, donc elle sera rejouée. Sans ce
-// garde-fou, chaque passage rendrait le stock une fois de plus.
-export async function marquerLibere(ref) {
-  const col = (await client()).db(NOM_BASE).collection('liberations');
-  const r = await col.updateOne(
+// Registre « le stock de cette commande est actuellement pris ».
+//
+// Il est indispensable parce que le rapprochement est déclenché par une
+// relecture périodique de la feuille : il SERA rejoué. Sans registre,
+// chaque passage prélèverait une fois de plus, et chaque libération
+// rendrait une fois de trop.
+//
+// Une marque, pas deux : le même enregistrement sert à savoir s'il faut
+// prélever et s'il faut restituer. Deux journaux séparés finiraient par
+// se contredire.
+//
+// Ordre d'écriture : marquer AVANT de décrémenter, effacer APRÈS avoir
+// rendu. Une panne au milieu laisse alors une marque sans décrément —
+// visible, et rattrapable — plutôt qu'un décrément que plus rien ne
+// rattache à une commande.
+const prelevements = async () =>
+  (await client()).db(NOM_BASE).collection('prelevements');
+
+// true = la marque vient d'être posée, le stock est à prélever.
+// false = elle existait déjà, il n'y a rien à faire.
+export async function marquerPreleve(ref) {
+  const r = await (await prelevements()).updateOne(
     { _id: ref },
     { $setOnInsert: { le: new Date().toISOString() } },
     { upsert: true }
   );
   return r.upsertedCount === 1;
+}
+
+export async function oublierPreleve(ref) {
+  await (await prelevements()).deleteOne({ _id: ref });
+}
+
+export async function estPreleve(ref) {
+  const marque = await (await prelevements()).findOne(
+    { _id: ref },
+    { projection: { _id: 1 } }
+  );
+  return Boolean(marque);
 }

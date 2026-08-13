@@ -3,7 +3,15 @@ import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Boutique from '@/components/Boutique';
 import { products as amorce } from '@/data/products';
-import { lireCatalogue, restituer, marquerLibere } from '@/libs/catalogue';
+import {
+  lireCatalogue,
+  reserver,
+  restituer,
+  marquerPreleve,
+  oublierPreleve,
+  estPreleve,
+  StockInsuffisant,
+} from '@/libs/catalogue';
 import { listerCommandes, STATUTS } from '@/libs/commandes';
 
 // Le catalogue et le stock viennent de MongoDB, les commandes de Google
@@ -12,30 +20,70 @@ import { listerCommandes, STATUTS } from '@/libs/commandes';
 // l'annonce de la boutique.
 export const revalidate = 60;
 
-// Le trésorier passe une commande à « echouee » dans la feuille quand un
-// virement n'arrive jamais. C'est ici qu'on remet les articles en vente,
-// puisque rien ne relie la feuille à Mongo. `marquerLibere` retient les
-// références déjà traitées : sans lui, chaque passage rendrait le stock
-// une fois de plus.
-async function libererCommandesAbandonnees() {
+// Rapprochement du stock avec la feuille du trésorier. Rien ne relie
+// Google Sheets à MongoDB : c'est ici, à la revalidation, que les
+// décisions prises à la main dans la feuille atteignent le stock.
+//
+// Le stock ne part qu'au paiement. Deux mouvements en découlent :
+//
+//   payée / à vérifier, pas encore prélevée  → on prélève. Ce cas n'est
+//     pas rare : l'envoi de la capture est facultatif, un client peut
+//     virer l'argent sans rien téléverser et le trésorier passer la
+//     ligne à « payée » lui-même. Sans ce rattrapage, ces commandes ne
+//     décrémenteraient jamais rien.
+//   échouée, déjà prélevée                   → on remet en vente.
+//
+// Le registre `prelevements` rend l'ensemble rejouable : une commande
+// déjà traitée ne l'est pas deux fois, dans un sens comme dans l'autre.
+async function rapprocherStock() {
   const commandes = await listerCommandes();
-  let liberees = 0;
+  let preleves = 0;
+  let rendus = 0;
 
   for (const c of commandes) {
-    if (c.statut !== STATUTS.ECHOUEE) continue;
-    if (!(await marquerLibere(c.ref))) continue; // déjà rendu
-    await restituer(c.lignes ?? []);
-    liberees += 1;
+    const lignes = c.lignes ?? [];
+
+    if (c.statut === STATUTS.PAYEE || c.statut === STATUTS.A_VERIFIER) {
+      if (!(await marquerPreleve(c.ref))) continue; // déjà pris
+      try {
+        await reserver(lignes);
+        preleves += 1;
+      } catch (err) {
+        await oublierPreleve(c.ref).catch(() => {});
+        // Stock insuffisant sur une commande déjà payée : c'est une
+        // survente, elle se règle avec le client. On la signale sans
+        // interrompre le rendu de la page pour tous les autres.
+        if (err instanceof StockInsuffisant) {
+          console.error(
+            '[stock] SURVENTE sur %s : %s (%s) — %d disponible(s)',
+            c.ref,
+            err.ligne.nom,
+            err.ligne.size,
+            err.dispo
+          );
+        } else {
+          throw err;
+        }
+      }
+      continue;
+    }
+
+    if (c.statut === STATUTS.ECHOUEE && (await estPreleve(c.ref))) {
+      await restituer(lignes);
+      await oublierPreleve(c.ref);
+      rendus += 1;
+    }
   }
 
-  if (liberees) console.log('[stock] %d commande(s) remise(s) en vente', liberees);
+  if (preleves) console.log('[stock] %d commande(s) prélevée(s)', preleves);
+  if (rendus) console.log('[stock] %d commande(s) remise(s) en vente', rendus);
 }
 
 export default async function Home() {
   let produits = amorce;
 
   try {
-    await libererCommandesAbandonnees();
+    await rapprocherStock();
     produits = await lireCatalogue();
   } catch (err) {
     // Catalogue injoignable : on sert la version du fichier, sans

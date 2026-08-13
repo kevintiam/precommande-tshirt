@@ -5,7 +5,15 @@ import { Clock } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import OrderSummary from '@/components/OrderSummary';
 import Checkout from '@/components/Checkout';
-import { addLine, incLine, decLine, removeLine, cartTotal } from '@/libs/cart';
+import {
+  lineId,
+  addLine,
+  incLine,
+  decLine,
+  removeLine,
+  cartTotal,
+} from '@/libs/cart';
+import { restantPour } from '@/libs/produit';
 import {
   subscribe,
   getSnapshot,
@@ -23,9 +31,22 @@ export default function Boutique({ products }) {
 
   const total = cartTotal(cart);
 
-  const onAdd = (product, size) => setCart((c) => addLine(c, product, size));
-  const onInc = (id) => setCart((c) => incLine(c, id));
-  const onDec = (id) => setCart((c) => decLine(c, id));
+  // Le plafond est relu dans `products` — la donnée du serveur — et non
+  // dans la copie du produit figée au moment de l'ajout au panier.
+  const restant = (productId, size) =>
+    restantPour(
+      products.find((p) => p.id === productId),
+      size
+    );
+
+  const onAdd = (product, size) =>
+    setCart((c) => addLine(c, product, size, restant(product.id, size)));
+  const onInc = (productId, size) =>
+    setCart((c) =>
+      incLine(c, lineId(productId, size), restant(productId, size))
+    );
+  const onDec = (productId, size) =>
+    setCart((c) => decLine(c, lineId(productId, size)));
   const onRemove = (id) => setCart((c) => removeLine(c, id));
 
   const onConfirmed = (commande) => {

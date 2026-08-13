@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Minus, Plus } from 'lucide-react';
-import { lineId, findLine } from '@/libs/cart';
+import { findLine } from '@/libs/cart';
 import { taillesDe, restantPour } from '@/libs/produit';
 
 export default function ProductActions({ product, cart, onAdd, onInc, onDec }) {
@@ -22,7 +22,6 @@ export default function ProductActions({ product, cart, onAdd, onInc, onDec }) {
   );
 
   const line = findLine(cart, product.id, size);
-  const id = lineId(product.id, size);
 
   const restantTaille = dispo(size);
   const epuise = stockConnu && restantTaille <= 0;
@@ -71,7 +70,7 @@ export default function ProductActions({ product, cart, onAdd, onInc, onDec }) {
           >
             <button
               type="button"
-              onClick={() => onDec(id)}
+              onClick={() => onDec(product.id, size)}
               className="cursor-pointer rounded-full border border-stone-300 p-1.5 text-stone-600 transition-colors hover:border-bordeaux-300 hover:bg-bordeaux-50 hover:text-bordeaux-700"
               aria-label="Diminuer la quantité"
             >
@@ -82,7 +81,7 @@ export default function ProductActions({ product, cart, onAdd, onInc, onDec }) {
             </span>
             <button
               type="button"
-              onClick={() => onInc(id)}
+              onClick={() => onInc(product.id, size)}
               disabled={auPlafond}
               title={auPlafond ? 'Stock atteint' : undefined}
               className="cursor-pointer rounded-full border border-stone-300 p-1.5 text-stone-600 transition-colors hover:border-bordeaux-300 hover:bg-bordeaux-50 hover:text-bordeaux-700 disabled:cursor-not-allowed disabled:border-stone-100 disabled:text-stone-300 disabled:hover:bg-transparent"
