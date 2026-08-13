@@ -45,13 +45,29 @@ export class StockInsuffisant extends Error {
 // Synchronise le catalogue depuis src/data/products.js.
 //
 // Le partage des rôles :
-//   src/data/products.js  → le CONTENU (nom, description, prix, images,
-//                           quantités initiales). Il écrase Mongo à chaque
-//                           démarrage : une seule source, pas de divergence.
-//   MongoDB               → `restant`, le seul chiffre vivant. Jamais
-//                           réécrit, sinon un déploiement remettrait le
-//                           stock à neuf en pleine vente.
-export async function amorcerCatalogue() {
+//   MongoDB               → fait AUTORITÉ. Ce que tu modifies dans Atlas
+//                           — nom, prix, images, stock — n'est jamais
+//                           écrasé par un déploiement.
+//   src/data/products.js  → peut AJOUTER, jamais modifier. Un nouveau
+//                           produit, une nouvelle taille ou un nouveau
+//                           champ arrive en base ; une valeur changée
+//                           dans le fichier, non.
+//
+// Cette règle « ajouter seulement » évite les deux pièges opposés : un
+// déploiement qui écrase tes retouches, et un catalogue figé où plus
+// aucune nouveauté ne passe.
+//
+// `forcer: true` inverse la règle et impose le fichier — c'est la porte
+// de sortie, exposée par `npm run catalogue:resync`.
+//
+// Exécutée une fois par instance de serveur : elle coûte 79 écritures et
+// le contenu ne bouge qu'au déploiement, lequel crée de nouvelles
+// instances et la relance donc naturellement.
+let catalogueSynchronise = false;
+
+export async function amorcerCatalogue({ forcer = false } = {}) {
+  if (catalogueSynchronise && !forcer) return;
+
   const produits = await produitsCol();
   const operations = [];
 
@@ -59,27 +75,50 @@ export async function amorcerCatalogue() {
     const images = p.images?.length ? p.images : p.image ? [p.image] : [];
     // `image` reste la vignette. S'il est absent, on prend la première de
     // la galerie plutôt que de laisser un champ vide.
-    const vignette = p.image ?? images[0];
+    const contenu = {
+      name: p.name,
+      description: p.description,
+      price: p.price,
+      image: p.image ?? images[0],
+      images,
+      ...(p.imagePosition ? { imagePosition: p.imagePosition } : {}),
+    };
 
-    operations.push({
-      updateOne: {
-        filter: { _id: p.id },
-        update: {
-          $set: {
-            name: p.name,
-            description: p.description,
-            price: p.price,
-            image: vignette,
-            images,
-            ...(p.imagePosition ? { imagePosition: p.imagePosition } : {}),
+    if (forcer) {
+      operations.push({
+        updateOne: {
+          filter: { _id: p.id },
+          update: {
+            $set: contenu,
+            // Un `imagePosition` retiré du fichier doit disparaître aussi
+            // du document, sinon le recadrage resterait collé au produit.
+            ...(p.imagePosition ? {} : { $unset: { imagePosition: '' } }),
           },
-          // Un `imagePosition` retiré du fichier doit disparaître aussi
-          // du document, sinon le recadrage resterait collé au produit.
-          ...(p.imagePosition ? {} : { $unset: { imagePosition: '' } }),
+          upsert: true,
         },
-        upsert: true,
-      },
-    });
+      });
+    } else {
+      // Création seule : un document existant n'est jamais touché.
+      operations.push({
+        updateOne: {
+          filter: { _id: p.id },
+          update: { $setOnInsert: contenu },
+          upsert: true,
+        },
+      });
+
+      // Rattrapage additif, champ par champ : `$exists: false` fait que
+      // seuls les champs ABSENTS sont remplis. C'est ce qui permet
+      // d'introduire un nouveau champ sans rien écraser.
+      for (const [champ, valeur] of Object.entries(contenu)) {
+        operations.push({
+          updateOne: {
+            filter: { _id: p.id, [champ]: { $exists: false } },
+            update: { $set: { [champ]: valeur } },
+          },
+        });
+      }
+    }
 
     for (const [taille, quantite] of Object.entries(p.stock ?? {})) {
       // Taille nouvelle : on crée `initial` ET `restant`.
@@ -91,19 +130,28 @@ export async function amorcerCatalogue() {
           },
         },
       });
-      // Taille déjà connue : seul `initial` suit le fichier.
-      operations.push({
-        updateOne: {
-          filter: { _id: p.id, [`stock.${taille}`]: { $exists: true } },
-          update: { $set: { [`stock.${taille}.initial`]: quantite } },
-        },
-      });
+
+      // Taille connue : seul le mode forcé réaligne `initial`. `restant`
+      // n'est JAMAIS réécrit, même en forçant : remettre le stock à neuf
+      // en pleine vente serait la pire des surprises.
+      if (forcer) {
+        operations.push({
+          updateOne: {
+            filter: { _id: p.id, [`stock.${taille}`]: { $exists: true } },
+            update: { $set: { [`stock.${taille}.initial`]: quantite } },
+          },
+        });
+      }
     }
   }
 
   // `ordered` est indispensable : la création du document doit précéder
   // les mises à jour de son stock.
   if (operations.length) await produits.bulkWrite(operations, { ordered: true });
+
+  // Marqué seulement après succès : un échec réseau doit pouvoir être
+  // retenté au prochain appel, pas rester silencieusement inachevé.
+  catalogueSynchronise = true;
 }
 
 // Le catalogue tel que l'affiche la boutique. `stock` y est aplati en

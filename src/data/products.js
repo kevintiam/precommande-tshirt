@@ -40,7 +40,7 @@ export const products = [
     name: 'Hoodie IMPACT — Bordeaux, logo dégradé',
     description:
       'Sweat à capuche molletonné, poche kangourou et bords côtelés. Logo IMPACT en dégradé rouge à bleu.',
-    price: 55,
+    price: 50,
     image: '/images/04.PNG',
     stock: { M: 15, L: 20, XL: 15 },
   },
@@ -49,7 +49,7 @@ export const products = [
     name: 'Hoodie IMPACT — Bordeaux, logo blanc',
     description:
       'Le hoodie bordeaux avec le logo IMPACT imprimé en blanc. Capuche doublée et poche kangourou.',
-    price: 55,
+    price: 50,
     image: '/images/07.PNG',
     stock: { M: 15, L: 20, XL: 15 },
   },
@@ -58,7 +58,7 @@ export const products = [
     name: 'Hoodie IMPACT — Bleu roi, logo blanc',
     description:
       'Sweat à capuche bleu roi, logo IMPACT et ovale « CAMP ADN » en blanc. Coupe ample.',
-    price: 55,
+    price: 50,
     image: '/images/06.PNG',
     stock: { M: 15, L: 20, XL: 15 },
   },
@@ -67,7 +67,7 @@ export const products = [
     name: 'Hoodie IMPACT — Blanc, logo dégradé',
     description:
       'Sweat à capuche blanc, molletonné, avec le logo IMPACT en dégradé rouge à bleu.',
-    price: 55,
+    price: 50,
     image: '/images/08.PNG',
     stock: { M: 15, L: 20, XL: 15 },
   },
@@ -100,6 +100,39 @@ export const products = [
     price: 30,
     image: '/images/11.PNG',
     imagePosition: 'left',
+    stock: { M: 15, L: 20, XL: 15 },
+  },
+
+  // Hoodies DISCIPLE. Deux vues chacun : devant puis dos. Ce sont des
+  // photos d'un seul vêtement, donc pas d'`imagePosition` — le recadrage
+  // centré convient.
+  {
+    id: 'hoodie-disciple-blanc',
+    name: 'Hoodie DISCIPLE — Blanc',
+    description:
+      'Sweat à capuche blanc, molletonné, poche kangourou. « DISCIPLE » et sa flamme sur le devant, « à l’image de Dieu » en lettres gothiques au dos, dégradé rouge à bleu.',
+    price: 50,
+    images: ['/images/12-1.jpeg', '/images/12-2.jpeg'],
+    stock: { M: 15, L: 20, XL: 15 },
+  },
+  {
+    id: 'hoodie-disciple-gris',
+    name: 'Hoodie DISCIPLE — Gris chiné',
+    description:
+      'La même pièce en gris chiné. Le dégradé rouge à bleu ressort avec plus de contraste sur ce fond clair.',
+    price: 50,
+    // Le fichier 13-1 montre le dos : on place le devant en premier pour
+    // que la vignette de la boutique reste cohérente avec les autres.
+    images: ['/images/13-2.jpeg', '/images/13-1.jpeg'],
+    stock: { M: 15, L: 20, XL: 15 },
+  },
+  {
+    id: 'hoodie-disciple-noir',
+    name: 'Hoodie DISCIPLE — Noir',
+    description:
+      'Sweat à capuche noir. « DISCIPLE » sur le devant et « à l’image de Dieu » au dos, où le dégradé rouge à bleu éclate sur le fond sombre.',
+    price: 50,
+    images: ['/images/14-1.jpeg', '/images/14-2.jpeg'],
     stock: { M: 15, L: 20, XL: 15 },
   },
 

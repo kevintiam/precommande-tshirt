@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "catalogue:resync": "node scripts/resync-catalogue.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^6.8.1",
