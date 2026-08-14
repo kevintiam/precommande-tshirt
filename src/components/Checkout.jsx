@@ -330,6 +330,14 @@ export default function Checkout({
               confirmation n’est envoyé automatiquement.
             </p>
 
+            <p className="mt-2 text-center text-xs leading-relaxed text-stone-400">
+              Un problème avec ta commande ? Écris-nous à{' '}
+              <a href={`mailto:${INTERAC_EMAIL}`} className="underline underline-offset-2 hover:text-stone-600">
+                {INTERAC_EMAIL}
+              </a>{' '}
+              en indiquant ta référence {order.ref}.
+            </p>
+
             <button
               type="button"
               onClick={onTerminer}

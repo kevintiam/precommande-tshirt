@@ -13,8 +13,16 @@ import { products as amorce } from '@/data/products';
 
 export { StockInsuffisant } from '@/libs/stockage/mongo';
 
+// Certains produits du fichier n'ont qu'une `images` (galerie), pas
+// d'`image` (vignette) : mongo.js déduit la seconde de la première à
+// l'amorçage. Ce repli doit faire pareil, sinon la vignette de ces
+// produits est vide tant que MongoDB n'est pas configuré.
+const avecVignette = (p) => ({ ...p, image: p.image ?? p.images?.[0] });
+
 export const lireCatalogue = () =>
-  mongo.configure ? mongo.listerProduits() : Promise.resolve(amorce);
+  mongo.configure
+    ? mongo.listerProduits()
+    : Promise.resolve(amorce.map(avecVignette));
 
 export const reserver = (lignes) =>
   mongo.configure ? mongo.reserver(lignes) : Promise.resolve();

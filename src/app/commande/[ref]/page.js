@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { CheckCircle2, Clock, Hourglass, XCircle } from 'lucide-react';
 import { lireCommande, STATUTS } from '@/libs/commandes';
 import { formatPrice } from '@/libs/currency';
+import { INTERAC_EMAIL } from '@/components/PaymentMarks';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,6 +85,17 @@ export default async function PageCommande({ params }) {
       >
         Retour à la boutique
       </Link>
+
+      <p className="mt-4 text-center text-xs leading-relaxed text-stone-400">
+        Un problème avec ta commande ? Écris-nous à{' '}
+        <a
+          href={`mailto:${INTERAC_EMAIL}`}
+          className="underline underline-offset-2 hover:text-stone-600"
+        >
+          {INTERAC_EMAIL}
+        </a>{' '}
+        en indiquant ta référence {commande.ref}.
+      </p>
     </main>
   );
 }
