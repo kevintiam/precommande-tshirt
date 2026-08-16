@@ -107,7 +107,10 @@
       "Bash(curl -s -m 40 -w \" [%{http_code}]\" -X POST localhost:3161/api/commandes -H 'Content-Type: application/json' -d '{\"email\":\"miroir@test.ca\",\"firstName\":\"Miroir\",\"lastName\":\"Verif\",\"clientToken\":\"mir-1\",\"lignes\":[{\"productId\":\"tote-disciple\",\"size\":\"Unique\",\"qty\":1}]}')",
       "Bash(curl -s -m 40 -o /dev/null -w \"  GET / -> HTTP %{http_code}\\\\n\" localhost:3161/)",
       "Bash(node tmp-verif-sheet.mjs CR-4D6SFR)",
-      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-15\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; \"arrete\")"
+      "PowerShell(Get-Process node -ErrorAction SilentlyContinue | Where-Object { $_.StartTime -gt \\(Get-Date\\).AddMinutes\\(-15\\) } | Stop-Process -Force -ErrorAction SilentlyContinue; \"arrete\")",
+      "Bash(curl -s -m 15 -o /dev/null -D - https://precommande-tshirt.vercel.app/admin)",
+      "Bash(npm run *)",
+      "Bash(grep -c \"stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 }\" /Users/kevintiam/Sites/precommande-tshirt/src/data/products.js)"
     ]
   }
 }

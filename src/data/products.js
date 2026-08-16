@@ -12,7 +12,7 @@ export const products = [
       'Coupe oversize, col rond côtelé. Logo IMPACT en arche dégradée rouge à bleu, surmontant l’ovale « CAMP ADN ».',
     price: 25,
     image: '/images/01.PNG',
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'tee-bordeaux-blanc',
@@ -22,7 +22,7 @@ export const products = [
     price: 25,
     image: '/images/03.PNG',
     images: ['/images/03.PNG', '/images/02.PNG'],
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'tee-blanc-degrade',
@@ -31,7 +31,7 @@ export const products = [
       'T-shirt blanc coupe oversize. Le dégradé rouge à bleu du logo ressort pleinement sur le fond clair.',
     price: 25,
     image: '/images/05.PNG',
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'hoodie-bordeaux-degrade',
@@ -40,7 +40,7 @@ export const products = [
       'Sweat à capuche molletonné, poche kangourou et bords côtelés. Logo IMPACT en dégradé rouge à bleu.',
     price: 45,
     image: '/images/04.PNG',
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'hoodie-bordeaux-blanc',
@@ -49,7 +49,7 @@ export const products = [
       'Le hoodie bordeaux avec le logo IMPACT imprimé en blanc. Capuche doublée et poche kangourou.',
     price: 45,
     image: '/images/07.PNG',
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'hoodie-bleu-blanc',
@@ -58,7 +58,7 @@ export const products = [
       'Sweat à capuche bleu roi, logo IMPACT et ovale « CAMP ADN » en blanc. Coupe ample.',
     price: 45,
     image: '/images/06.PNG',
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'hoodie-blanc-degrade',
@@ -67,7 +67,7 @@ export const products = [
       'Sweat à capuche blanc, molletonné, avec le logo IMPACT en dégradé rouge à bleu.',
     price: 45,
     image: '/images/08.PNG',
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'tee-disciple-noir-degrade',
@@ -77,7 +77,7 @@ export const products = [
     price: 25,
     image: '/images/09.PNG',
     imagePosition: 'left',
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'tee-disciple-blanc-degrade',
@@ -88,7 +88,7 @@ export const products = [
     // image: '/images/10.PNG',
     images: ['/images/10-1.PNG', '/images/10-2.PNG'],
     imagePosition: 'left',
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'tee-disciple-noir-blanc',
@@ -98,7 +98,7 @@ export const products = [
     price: 25,
     image: '/images/11.PNG',
     imagePosition: 'left',
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
 
   // Hoodies DISCIPLE. Deux vues chacun : devant puis dos. Ce sont des
@@ -111,7 +111,7 @@ export const products = [
       'Sweat à capuche blanc, molletonné, poche kangourou. « DISCIPLE » et sa flamme sur le devant, « à l’image de Dieu » en lettres gothiques au dos, dégradé rouge à bleu.',
     price: 45,
     images: ['/images/12-1.jpeg', '/images/12-2.jpeg'],
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'hoodie-disciple-gris',
@@ -122,7 +122,7 @@ export const products = [
     // Le fichier 13-1 montre le dos : on place le devant en premier pour
     // que la vignette de la boutique reste cohérente avec les autres.
     images: ['/images/13-2.jpeg', '/images/13-1.jpeg'],
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'hoodie-disciple-noir',
@@ -131,7 +131,7 @@ export const products = [
       'Sweat à capuche noir. « DISCIPLE » sur le devant et « à l’image de Dieu » au dos, où le dégradé rouge à bleu éclate sur le fond sombre.',
     price: 45,
     images: ['/images/14-1.jpeg', '/images/14-2.jpeg'],
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
 
   // T-shirts « Made to be like Christ » : flamme brodée à la poitrine
@@ -144,7 +144,7 @@ export const products = [
       'T-shirt blanc coupe oversize, col rond côtelé. Flamme rouge à bleu sur la poitrine, « Made to be like Christ » calligraphié en grand au dos.',
     price: 25,
     images: ['/images/15-1.jpeg', '/images/15-2.jpeg'],
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'tee-christ-bleu',
@@ -153,7 +153,7 @@ export const products = [
       'La même pièce en bleu roi. Le lettrage « Made to be like Christ » ressort en orange vif sur le fond profond.',
     price: 25,
     images: ['/images/16-1.jpeg', '/images/16-2.jpeg'],
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
   {
     id: 'tee-christ-noir',
@@ -164,7 +164,7 @@ export const products = [
     // Le fichier 17-1 montre le dos : on place le devant en premier,
     // comme pour les hoodies DISCIPLE ci-dessus.
     images: ['/images/17-2.PNG', '/images/17-1.PNG'],
-    stock: { M: 100, L: 100, XL: 100 },
+    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100 },
   },
 
   {
