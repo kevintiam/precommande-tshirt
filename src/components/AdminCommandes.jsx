@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { LogOut, Search, X } from 'lucide-react';
 import { formatPrice } from '@/libs/currency';
 import ApercuPreuve from '@/components/ApercuPreuve';
 
@@ -36,6 +36,7 @@ export default function AdminCommandes({ commandes, statuts }) {
   const labels = creerLabels(statuts);
 
   const [filtre, setFiltre] = useState('toutes');
+  const [recherche, setRecherche] = useState('');
   const [enCours, setEnCours] = useState(() => new Set());
   const [erreurs, setErreurs] = useState({});
 
@@ -54,8 +55,26 @@ export default function AdminCommandes({ commandes, statuts }) {
     [commandes, statuts]
   );
 
-  const visibles =
-    filtre === 'toutes' ? commandes : commandes.filter((c) => c.statut === filtre);
+  // Recherche par nom, prénom, référence ou e-mail — insensible à la casse
+  // et aux accents, pour qu'un « Éloi » tapé « eloi » soit quand même trouvé.
+  const normaliser = (v) =>
+    (v ?? '')
+      .toString()
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '');
+
+  const terme = normaliser(recherche.trim());
+
+  const correspond = (cmd) =>
+    !terme ||
+    [cmd.ref, cmd.firstName, cmd.lastName, cmd.email].some((champ) =>
+      normaliser(champ).includes(terme)
+    );
+
+  const visibles = (
+    filtre === 'toutes' ? commandes : commandes.filter((c) => c.statut === filtre)
+  ).filter(correspond);
 
   const changerStatut = async (ref, statut) => {
     if (
@@ -141,9 +160,32 @@ export default function AdminCommandes({ commandes, statuts }) {
         ))}
       </div>
 
+      <div className="relative mt-3">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+        <input
+          type="text"
+          value={recherche}
+          onChange={(e) => setRecherche(e.target.value)}
+          placeholder="Chercher par nom, prénom, référence ou e-mail…"
+          className="w-full rounded-lg border border-stone-200 bg-white py-2 pl-9 pr-9 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-400 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10"
+        />
+        {recherche && (
+          <button
+            type="button"
+            onClick={() => setRecherche('')}
+            aria-label="Effacer la recherche"
+            className="absolute right-2.5 top-1/2 cursor-pointer -translate-y-1/2 rounded-full p-1 text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
+
       {visibles.length === 0 ? (
         <p className="mt-8 text-center text-sm text-stone-400">
-          Aucune commande dans cette catégorie.
+          {terme
+            ? 'Aucune commande ne correspond à cette recherche.'
+            : 'Aucune commande dans cette catégorie.'}
         </p>
       ) : (
         <ul className="mt-6 space-y-3">
