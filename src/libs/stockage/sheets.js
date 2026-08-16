@@ -6,11 +6,16 @@ import { STATUTS, StockageIndisponible } from '@/libs/stockage/contrat';
 // appels dont on a besoin (append, get, update) ne justifient pas
 // d'embarquer le paquet `googleapis`, qui pèse plusieurs mégaoctets.
 
-const SHEET_ID = process.env.GOOGLE_SHEETS_ID;
-const COMPTE = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+// Un copier-coller depuis la console Google/Vercel laisse parfois un
+// guillemet collé au bord de la valeur (chargeur d'environnement qui gère
+// mal les valeurs multi-lignes citées) : on le retire au cas où.
+const sansGuillemets = (v) => v?.replace(/^"|"$/g, '');
+
+const SHEET_ID = sansGuillemets(process.env.GOOGLE_SHEETS_ID);
+const COMPTE = sansGuillemets(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
 // Les sauts de ligne de la clé PEM survivent mal aux variables
 // d'environnement : ils y sont stockés en « \n » littéraux.
-const CLE = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+const CLE = sansGuillemets(process.env.GOOGLE_PRIVATE_KEY)?.replace(/\\n/g, '\n');
 const ONGLET = process.env.GOOGLE_SHEETS_ONGLET || 'Commandes';
 
 export const configure = Boolean(SHEET_ID && COMPTE && CLE);
