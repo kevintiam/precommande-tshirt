@@ -1,4 +1,5 @@
 import { formatPrice } from '@/libs/currency';
+import { rangTaille } from '@/libs/produit';
 
 // Panneau de synthèse affiché à côté de la liste des commandes : combien de
 // pièces sont parties, sur quel modèle et dans quelle taille. C'est ce qui
@@ -11,13 +12,6 @@ import { formatPrice } from '@/libs/currency';
 // Les commandes échouées ne comptent nulle part : ni vendues, ni à imprimer.
 // Le reste se lit en deux temps — « payé » est acquis, « en attente » est ce
 // qui peut encore basculer d'un côté ou de l'autre.
-const ORDRE_TAILLES = ['S', 'M', 'L', 'XL', 'XXL'];
-
-const rangTaille = (t) => {
-  const i = ORDRE_TAILLES.indexOf(t);
-  return i === -1 ? ORDRE_TAILLES.length : i;
-};
-
 const agreger = (commandes, statuts) => {
   const parProduit = new Map();
 
