@@ -2,23 +2,69 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { X, ShieldCheck, CheckCircle2, Copy, Check, Mail } from 'lucide-react';
+import {
+  X,
+  ShieldCheck,
+  CheckCircle2,
+  Copy,
+  Check,
+  Mail,
+  ExternalLink,
+} from 'lucide-react';
 import { lineId } from '@/libs/cart';
 import { validate, createSet } from '@/libs/validation';
 import { formatPrice } from '@/libs/currency';
+import { MOYENS, MOYEN_PAR_DEFAUT } from '@/libs/stockage/contrat';
 import {
   Section,
   Field,
   Row,
   InteracMark,
+  PaypalMark,
+  ChoixMoyen,
   ConfirmButton,
   INTERAC_EMAIL,
+  PAYPAL_EMAIL,
+  PAYPAL_ME,
 } from '@/components/PaymentMarks';
+
+// Tout ce qui distingue les deux moyens, en un seul endroit. Le parcours,
+// lui, est identique : le client paie depuis son application, revient
+// téléverser sa capture, le trésorier confirme. Rien n'est encaissé ici.
+const PAIEMENTS = {
+  [MOYENS.INTERAC]: {
+    Marque: InteracMark,
+    note: 'Virement bancaire',
+    nom: 'Virement Interac',
+    destinataire: INTERAC_EMAIL,
+    lien: null,
+    // La référence voyage dans le champ « message » du virement : c'est
+    // le seul lien entre l'argent reçu et la commande.
+    consigne: (ref) =>
+      `Indiquez la référence ${ref} dans le message du virement : c’est elle qui permet d’associer votre paiement à votre commande.`,
+    apresPaiement:
+      'Joins la capture d’écran de ta confirmation Interac. Elle nous permet de retrouver ton paiement et d’accélérer la validation.',
+  },
+  [MOYENS.PAYPAL]: {
+    Marque: PaypalMark,
+    note: 'Depuis ton compte',
+    nom: 'PayPal',
+    destinataire: PAYPAL_EMAIL,
+    lien: PAYPAL_ME,
+    // « Entre proches » évite les frais au camp. On le demande sans en
+    // faire une condition : un envoi classique reste parfaitement valide.
+    consigne: (ref) =>
+      `Indiquez la référence ${ref} dans la note du paiement. Si PayPal vous le propose, choisissez « Entre proches » : le camp reçoit alors la totalité du montant.`,
+    apresPaiement:
+      'Joins la capture d’écran de ta confirmation PayPal. Elle nous permet de retrouver ton paiement et d’accélérer la validation.',
+  },
+};
 
 const emptyForm = {
   email: '',
   firstName: '',
   lastName: '',
+  moyen: MOYEN_PAR_DEFAUT,
 };
 
 // Jeton d'idempotence : identifie une tentative de commande, pas une
@@ -156,12 +202,16 @@ export default function Checkout({
     if (ev.target === ev.currentTarget) handleClose();
   };
 
+  // Le moyen fait foi tel que le SERVEUR l'a enregistré : sur un rejeu,
+  // la commande existante peut avoir été passée avec l'autre moyen.
+  const paiement = PAIEMENTS[order?.moyen] ?? PAIEMENTS[MOYEN_PAR_DEFAUT];
+
   // Les trois informations que le client doit reporter dans son
-  // application bancaire, sous une forme copiable d'un geste.
+  // application, sous une forme copiable d'un geste.
   const infosVirement = order
     ? [
-        'Virement Interac — Camp Impact ADN',
-        `Destinataire : ${INTERAC_EMAIL}`,
+        `${paiement.nom} — Camp Impact ADN`,
+        `Destinataire : ${paiement.destinataire}`,
         `Montant : ${formatPrice(order.total)}`,
         `Message / référence : ${order.ref}`,
       ].join('\n')
@@ -216,7 +266,7 @@ export default function Checkout({
               <p className="mt-2 text-sm leading-relaxed text-stone-500">
                 Votre commande est réservée au nom de{' '}
                 <span className="font-medium text-stone-700">{order.email}</span>
-                . Envoyez maintenant votre virement pour la confirmer.
+                . Envoyez maintenant votre paiement pour la confirmer.
               </p>
             </div>
 
@@ -228,15 +278,29 @@ export default function Checkout({
             </a>
 
             <div className="mt-3 rounded-xl border border-stone-200 bg-stone-50 px-5 py-4">
-              <InteracMark className="text-base" />
+              <paiement.Marque className="text-base" />
               <div className="mt-3 space-y-1.5 text-sm">
-                <Row label="Destinataire" value={INTERAC_EMAIL} />
+                <Row label="Destinataire" value={paiement.destinataire} />
                 <Row label="Montant" value={formatPrice(order.total)} />
                 <Row label="Référence" value={order.ref} />
               </div>
+
+              {/* Raccourci vers l'application : il pré-remplit le
+                  destinataire, ce que la recopie à la main rate souvent. */}
+              {paiement.lien && (
+                <a
+                  href={paiement.lien}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex items-center justify-center gap-2 rounded-lg border border-stone-300 bg-white py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50"
+                >
+                  Ouvrir {paiement.nom}
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+
               <p className="mt-3 border-t border-stone-200 pt-3 text-xs leading-relaxed text-stone-400">
-                Indiquez la référence {order.ref} dans le message du virement :
-                c’est elle qui permet d’associer votre paiement à votre commande.
+                {paiement.consigne(order.ref)}
               </p>
             </div>
 
@@ -272,16 +336,15 @@ export default function Checkout({
             {order.preuveEnvoyee ? (
               <p className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm leading-relaxed text-emerald-800">
                 Capture reçue. Ta commande sera confirmée dès que nous aurons
-                vérifié le virement sur notre relevé.
+                vérifié le paiement de notre côté.
               </p>
             ) : (
               <div className="mt-4 rounded-xl border border-stone-200 p-4">
                 <p className="text-sm font-semibold text-stone-900">
-                  Une fois le virement envoyé
+                  Une fois le paiement envoyé
                 </p>
                 <p className="mt-1 text-xs leading-relaxed text-stone-500">
-                  Joins la capture d’écran de ta confirmation Interac. Elle nous
-                  permet de retrouver ton paiement et d’accélérer la validation.
+                  {paiement.apresPaiement}
                 </p>
 
                 <input
@@ -320,7 +383,7 @@ export default function Checkout({
                   disabled={!fichier || envoiPreuve}
                   className="mt-3 w-full cursor-pointer rounded-lg bg-bordeaux-700 py-2.5 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:bg-bordeaux-800 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
                 >
-                  {envoiPreuve ? 'Envoi…' : 'J’ai envoyé mon virement'}
+                  {envoiPreuve ? 'Envoi…' : 'J’ai envoyé mon paiement'}
                 </button>
               </div>
             )}
@@ -421,10 +484,18 @@ export default function Checkout({
             </Section>
 
             <Section title="Paiement">
-              <div className="flex items-center justify-between rounded-lg border border-stone-200 px-4 py-3">
-                <InteracMark className="text-base" />
-                <span className="text-xs text-stone-400">Seul moyen accepté</span>
-              </div>
+              <ChoixMoyen
+                valeur={form.moyen}
+                onChange={(moyen) => setForm((f) => ({ ...f, moyen }))}
+                moyens={Object.entries(PAIEMENTS).map(([cle, p]) => ({
+                  cle,
+                  Marque: p.Marque,
+                  note: p.note,
+                }))}
+              />
+              <p className="text-xs leading-relaxed text-stone-400">
+                Les consignes de paiement s’afficheront à l’étape suivante.
+              </p>
             </Section>
 
             <div>

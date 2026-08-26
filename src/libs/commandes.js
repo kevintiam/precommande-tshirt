@@ -8,7 +8,12 @@ import * as fichier from '@/libs/stockage/fichier';
 // Le stockage fichier ne sert qu'au développement sans identifiants.
 const impl = sheets.configure ? sheets : fichier;
 
-export { STATUTS, StockageIndisponible } from '@/libs/stockage/contrat';
+export {
+  STATUTS,
+  MOYENS,
+  MOYEN_PAR_DEFAUT,
+  StockageIndisponible,
+} from '@/libs/stockage/contrat';
 
 export const creerCommande = (commande) => impl.creerCommande(commande);
 export const lireCommande = (ref) => impl.lireCommande(ref);

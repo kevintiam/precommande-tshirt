@@ -1,8 +1,14 @@
-import { creerCommande, lireParJeton, STATUTS } from '@/libs/commandes';
+import {
+  creerCommande,
+  lireParJeton,
+  STATUTS,
+  MOYEN_PAR_DEFAUT,
+} from '@/libs/commandes';
 import { lireCatalogue } from '@/libs/catalogue';
 import {
   isValidEmail,
   isValidName,
+  moyenValide,
   validateLignes,
 } from '@/libs/validation';
 
@@ -25,10 +31,13 @@ const indisponible =
   'Les commandes ne peuvent pas être enregistrées pour le moment. ' +
   'Réessaie dans quelques minutes ou écris-nous.';
 
+// `moyen` en fait partie : sur un rejeu, c'est la commande DÉJÀ
+// enregistrée qui décide des consignes affichées, pas l'écran du client.
 const resume = (commande) => ({
   ref: commande.ref,
   total: commande.total,
   email: commande.email,
+  moyen: commande.moyen ?? MOYEN_PAR_DEFAUT,
 });
 
 export async function POST(request) {
@@ -39,7 +48,7 @@ export async function POST(request) {
     return erreur('Requête illisible.');
   }
 
-  const { email, firstName, lastName, lignes, clientToken } = corps ?? {};
+  const { email, firstName, lastName, lignes, clientToken, moyen } = corps ?? {};
 
   // Le navigateur peut envoyer n'importe quoi : la validation du
   // formulaire tourne côté client et se contourne trivialement. Tout est
@@ -47,6 +56,12 @@ export async function POST(request) {
   if (!isValidEmail(email)) return erreur('E-mail invalide.');
   if (!isValidName(firstName)) return erreur('Prénom requis.');
   if (!isValidName(lastName)) return erreur('Nom requis.');
+  // Absent = onglet ouvert avant la mise en ligne de PayPal, dont le
+  // bundle ne connaît que l'Interac : on retombe dessus plutôt que de lui
+  // opposer un refus qu'il ne peut pas comprendre. Présent mais
+  // méconnaissable, en revanche, c'est une requête forgée : on refuse.
+  const moyenRetenu = moyen === undefined ? MOYEN_PAR_DEFAUT : moyen;
+  if (!moyenValide(moyenRetenu)) return erreur('Moyen de paiement inconnu.');
 
   // Un rejeu du même jeton reprend la commande existante au lieu d'en
   // créer une seconde — et surtout, sans redécrémenter le stock.
@@ -106,6 +121,7 @@ export async function POST(request) {
     lastName: lastName.trim(),
     lignes: detail,
     total,
+    moyen: moyenRetenu,
     statut: STATUTS.EN_ATTENTE,
   };
 

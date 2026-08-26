@@ -1,4 +1,5 @@
 import { taillesDe, restantPour } from '@/libs/produit';
+import { MOYENS } from '@/libs/stockage/contrat';
 
 // Bornes d'une commande. Elles vivent ici et non dans la route, pour que
 // la règle et son contrôle ne puissent pas diverger.
@@ -32,6 +33,13 @@ export const createSet = (setForm) => (key) => (e) => {
   const { value } = e.target;
   setForm((f) => ({ ...f, [key]: value }));
 };
+
+// Le moyen de paiement vient du navigateur : on ne garde que les deux
+// valeurs connues. Sans ce filtre, n'importe quoi finirait dans la
+// feuille du trésorier, jusqu'à une formule si la chaîne commence par
+// « = ».
+export const moyenValide = (moyen) =>
+  Object.values(MOYENS).includes(moyen);
 
 // Validation des lignes de commande, côté serveur. Renvoie un message
 // d'erreur ou null — pas d'exception : un panier invalide est un cas

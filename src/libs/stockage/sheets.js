@@ -1,5 +1,10 @@
 import { createSign } from 'node:crypto';
-import { STATUTS, StockageIndisponible } from '@/libs/stockage/contrat';
+import {
+  STATUTS,
+  MOYENS,
+  MOYEN_PAR_DEFAUT,
+  StockageIndisponible,
+} from '@/libs/stockage/contrat';
 
 // Stockage Google Sheets — une ligne par commande, lisible par le
 // trésorier sans outil. On parle directement à l'API REST v4 : les trois
@@ -34,9 +39,10 @@ export const COLONNES = [
   'Jeton',
   'Détail — ne pas modifier',
   'Preuve',
+  'Moyen',
 ];
 
-const PLAGE = `${ONGLET}!A2:M`;
+const PLAGE = `${ONGLET}!A2:N`;
 
 const base64url = (valeur) =>
   Buffer.from(valeur)
@@ -127,6 +133,7 @@ const versLigne = (c) => [
   c.clientToken ?? '',
   JSON.stringify(c.lignes),
   c.preuveUrl ?? '',
+  c.moyen ?? MOYEN_PAR_DEFAUT,
 ];
 
 // La colonne « Statut » est saisie à la main par le trésorier, une fois
@@ -148,6 +155,15 @@ const normaliserStatut = (valeur) => {
   if (['a_verifier', 'a verifier', 'verifier', 'declare'].includes(v))
     return STATUTS.A_VERIFIER;
   return STATUTS.EN_ATTENTE;
+};
+
+// Colonne N, ajoutée après coup : les commandes antérieures n'ont rien
+// dans cette cellule, et elles ont toutes été payées par Interac. Une
+// valeur vide ou méconnaissable retombe donc sur Interac — jamais sur
+// PayPal, qui enverrait le trésorier vérifier au mauvais endroit.
+const normaliserMoyen = (valeur) => {
+  const v = String(valeur ?? '').trim().toLowerCase();
+  return v === MOYENS.PAYPAL ? MOYENS.PAYPAL : MOYEN_PAR_DEFAUT;
 };
 
 const depuisLigne = (r) => {
@@ -173,6 +189,7 @@ const depuisLigne = (r) => {
     clientToken: r[10] || null,
     lignes,
     preuveUrl: r[12] || null,
+    moyen: normaliserMoyen(r[13]),
   };
 };
 
@@ -199,7 +216,7 @@ async function assurerOnglet() {
     });
   }
 
-  const entetes = await api(`/values/${encodeURIComponent(`${ONGLET}!A1:M1`)}`);
+  const entetes = await api(`/values/${encodeURIComponent(`${ONGLET}!A1:N1`)}`);
   const posees = entetes.values?.[0]?.length ?? 0;
 
   // On complète uniquement les en-têtes manquants, jamais ceux qui sont
@@ -254,7 +271,7 @@ export const lireParJeton = async (jeton) => {
 
 const ecrireLigne = async (numero, commande) =>
   api(
-    `/values/${encodeURIComponent(`${ONGLET}!A${numero}:M${numero}`)}` +
+    `/values/${encodeURIComponent(`${ONGLET}!A${numero}:N${numero}`)}` +
       '?valueInputOption=RAW',
     { method: 'PUT', body: JSON.stringify({ values: [versLigne(commande)] }) }
   );

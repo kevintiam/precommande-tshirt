@@ -25,6 +25,14 @@ const creerLabels = (statuts) => ({
   },
 });
 
+// Le trésorier vérifie deux endroits différents selon le moyen. Le rappel
+// est discret mais présent sur chaque commande : chercher au relevé
+// bancaire un paiement arrivé sur PayPal, c'est le déclarer manquant.
+const MOYENS_LABELS = {
+  paypal: { texte: 'PayPal', classe: 'border-[#003087]/30 bg-[#003087]/5 text-[#003087]' },
+  interac: { texte: 'Interac', classe: 'border-amber-300/60 bg-amber-50 text-amber-800' },
+};
+
 const formatDate = (iso) =>
   new Date(iso).toLocaleString('fr-CA', {
     dateStyle: 'medium',
@@ -191,6 +199,7 @@ export default function AdminCommandes({ commandes, statuts }) {
         <ul className="mt-6 space-y-3">
           {visibles.map((cmd) => {
             const label = labels[cmd.statut] ?? labels[statuts.EN_ATTENTE];
+            const moyen = MOYENS_LABELS[cmd.moyen] ?? MOYENS_LABELS.interac;
             const modifiable =
               cmd.statut === statuts.EN_ATTENTE || cmd.statut === statuts.A_VERIFIER;
             const busy = enCours.has(cmd.ref);
@@ -206,6 +215,11 @@ export default function AdminCommandes({ commandes, statuts }) {
                       className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${label.classe}`}
                     >
                       {label.texte}
+                    </span>
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${moyen.classe}`}
+                    >
+                      {moyen.texte}
                     </span>
                   </div>
                   <span className="text-xs text-stone-400">{formatDate(cmd.date)}</span>

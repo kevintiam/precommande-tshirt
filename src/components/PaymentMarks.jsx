@@ -4,6 +4,18 @@ import { formatPrice } from '@/libs/currency';
 // Adresse recevant les virements Interac. À remplacer par celle de l'organisation.
 export const INTERAC_EMAIL = 'ImpactcampADN26@gmail.com';
 
+// ⚠️ À REMPLACER — adresse du compte PayPal de l'organisation.
+// Tant que cette valeur n'est pas la bonne, les paiements PayPal
+// partiront dans le vide : c'est la seule chose à changer pour ouvrir
+// ce moyen de paiement.
+export const PAYPAL_EMAIL = 'ImpactcampADN26@gmail.com';
+
+// Lien paypal.me, s'il existe. Il évite au client de recopier l'adresse
+// et le montant à la main — de loin la source d'erreur la plus fréquente.
+// Laisser à null si l'organisation n'en a pas : le bloc s'affiche alors
+// avec l'adresse seule, sans bouton mort.
+export const PAYPAL_ME = null;
+
 function Section({ title, children }) {
   return (
     <fieldset className="space-y-3">
@@ -59,6 +71,52 @@ function InteracMark({ className = '' }) {
   );
 }
 
+// Le bleu et l'italique du logo PayPal, sans reproduire la marque
+// déposée : on nomme le service, on ne prétend pas être lui.
+function PaypalMark({ className = '' }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[#003087] text-xs font-bold italic text-white">
+        P
+      </span>
+      <span className="font-bold italic text-[#003087]">PayPal</span>
+    </span>
+  );
+}
+
+// Choix du moyen de paiement. Deux boutons plutôt qu'une liste
+// déroulante : à deux options, le déroulant cache la moitié du choix.
+function ChoixMoyen({ moyens, valeur, onChange }) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Moyen de paiement"
+      className="grid grid-cols-2 gap-2"
+    >
+      {moyens.map(({ cle, Marque, note }) => {
+        const actif = cle === valeur;
+        return (
+          <button
+            key={cle}
+            type="button"
+            role="radio"
+            aria-checked={actif}
+            onClick={() => onChange(cle)}
+            className={`cursor-pointer rounded-lg border px-3 py-3 text-left transition-colors ${
+              actif
+                ? 'border-bordeaux-700 bg-bordeaux-50 ring-1 ring-bordeaux-700'
+                : 'border-stone-200 hover:border-bordeaux-300'
+            }`}
+          >
+            <Marque className="text-sm" />
+            <span className="mt-1 block text-xs text-stone-400">{note}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function ConfirmButton({ total, processing, disabled }) {
   return (
     <button
@@ -78,4 +136,12 @@ function ConfirmButton({ total, processing, disabled }) {
   );
 }
 
-export { Section, Field, Row, InteracMark, ConfirmButton };
+export {
+  Section,
+  Field,
+  Row,
+  InteracMark,
+  PaypalMark,
+  ChoixMoyen,
+  ConfirmButton,
+};
