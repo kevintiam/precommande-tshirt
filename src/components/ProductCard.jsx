@@ -24,7 +24,7 @@ export default function ProductCard({ product, cart, onAdd, onInc, onDec }) {
             {product.name}
             {epuise && (
               <span className="ml-2 whitespace-nowrap rounded-full bg-stone-100 px-2 py-0.5 align-middle text-[11px] font-semibold uppercase tracking-wide text-stone-500">
-                Épuisé
+                Sold out
               </span>
             )}
           </h3>

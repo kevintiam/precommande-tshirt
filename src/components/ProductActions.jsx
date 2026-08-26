@@ -48,7 +48,7 @@ export default function ProductActions({ product, cart, onAdd, onInc, onDec }) {
                   onClick={() => setSize(t)}
                   aria-pressed={active}
                   disabled={sansStock}
-                  title={sansStock ? 'Épuisé' : undefined}
+                  title={sansStock ? 'Sold out' : undefined}
                   className={`min-w-8 rounded-md border px-2 py-1 text-xs font-medium transition-colors ${
                     sansStock
                       ? 'cursor-not-allowed border-stone-100 text-stone-300 line-through'
@@ -103,7 +103,7 @@ export default function ProductActions({ product, cart, onAdd, onInc, onDec }) {
                 : 'cursor-pointer border-bordeaux-700 text-bordeaux-700 hover:bg-bordeaux-700 hover:text-white'
             }`}
           >
-            {epuise ? 'Épuisé' : 'Ajouter'}
+            {epuise ? 'Sold out' : 'Ajouter'}
           </button>
         )}
       </div>

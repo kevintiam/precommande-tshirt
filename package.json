@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "catalogue:resync": "node scripts/resync-catalogue.mjs",
-    "stock:migrer": "node scripts/migrer-prelevements.mjs"
+    "stock:migrer": "node scripts/migrer-prelevements.mjs",
+    "stock:realigner": "node scripts/realigner-stock.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^6.8.1",
