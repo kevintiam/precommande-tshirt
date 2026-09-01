@@ -2,6 +2,7 @@ import { ShieldCheck } from 'lucide-react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Boutique from '@/components/Boutique';
+import BoutiqueClose from '@/components/BoutiqueClose';
 import { products as amorce } from '@/data/products';
 import {
   lireCatalogue,
@@ -20,21 +21,7 @@ import { listerCommandes, STATUTS } from '@/libs/commandes';
 // l'annonce de la boutique.
 export const revalidate = 60;
 
-// Rapprochement du stock avec la feuille du trésorier. Rien ne relie
-// Google Sheets à MongoDB : c'est ici, à la revalidation, que les
-// décisions prises à la main dans la feuille atteignent le stock.
-//
-// Le stock ne part qu'au paiement. Deux mouvements en découlent :
-//
-//   payée / à vérifier, pas encore prélevée  → on prélève. Ce cas n'est
-//     pas rare : l'envoi de la capture est facultatif, un client peut
-//     virer l'argent sans rien téléverser et le trésorier passer la
-//     ligne à « payée » lui-même. Sans ce rattrapage, ces commandes ne
-//     décrémenteraient jamais rien.
-//   échouée, déjà prélevée                   → on remet en vente.
-//
-// Le registre `prelevements` rend l'ensemble rejouable : une commande
-// déjà traitée ne l'est pas deux fois, dans un sens comme dans l'autre.
+
 async function rapprocherStock() {
   const commandes = await listerCommandes();
   let preleves = 0;
@@ -97,14 +84,15 @@ export default async function Home() {
       <Header />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
-        <Hero />
+        {/* <Hero /> */}
 
-        <Boutique products={produits} />
+        {/* <Boutique products={produits} /> */}
+        <BoutiqueClose />
 
-        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-stone-400">
+        {/* <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-stone-400">
           <ShieldCheck className="h-3.5 w-3.5 flex-none" />
-          Paiement par virement Interac uniquement.
-        </p>
+          Paiement par virement Interac et paypal uniquement.
+        </p> */}
       </main>
 
       <footer className="border-t border-stone-200 px-5 py-6">
