@@ -20,6 +20,13 @@ function Section({ title, children }) {
 }
 
 function Field({ label, error, icon, ...props }) {
+  const handleChange = (event) => {
+    const value = event?.target?.value ?? event;
+    if (typeof props.onChange === 'function') {
+      props.onChange(value);
+    }
+  };
+
   return (
     <label className="block">
       <span className="mb-1 block text-xs font-medium text-stone-500">
@@ -28,6 +35,7 @@ function Field({ label, error, icon, ...props }) {
       <span className="relative block">
         <input
           {...props}
+          onChange={handleChange}
           className={`w-full rounded-lg border bg-white px-3 py-2 text-sm text-stone-900 outline-none transition-colors placeholder:text-stone-300 focus:border-stone-900 focus:ring-2 focus:ring-stone-900/10 ${
             icon ? 'pr-9' : ''
           } ${error ? 'border-red-400' : 'border-stone-200'}`}

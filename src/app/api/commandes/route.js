@@ -34,6 +34,7 @@ const resume = (commande) => ({
   total: commande.total,
   email: commande.email,
   moyen: commande.moyen ?? MOYEN_PAR_DEFAUT,
+  firstName: commande.firstName,
 });
 
 export async function POST(request) {

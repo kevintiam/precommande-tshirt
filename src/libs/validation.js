@@ -89,9 +89,3 @@ export const validateLignes = (lignes, catalogue) => {
 
   return null;
 };
-
-  export const validateForm = (form) => {
-    const err = validate(form);
-    setErrors(err);
-    return Object.keys(err).length === 0;
-  };

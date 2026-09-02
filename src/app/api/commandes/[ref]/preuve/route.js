@@ -8,27 +8,7 @@ import {
   StockInsuffisant,
 } from '@/libs/catalogue';
 
-// Envoi de la capture du virement par le client.
-//
-// ⚠️ Une capture n'est PAS une preuve : elle se falsifie et se réutilise.
-// Cette route ne fait donc JAMAIS passer une commande à « payee ». Elle
-// la place à « a_verifier », c'est-à-dire « le client dit avoir payé,
-// va regarder ton relevé ». La décision reste humaine.
-//
-// C'est AUSSI ici que le stock est décrémenté, et nulle part ailleurs :
-// une commande créée mais jamais réglée ne doit retenir aucun article.
-// Le prix de ce choix est qu'entre la commande et cet envoi, rien n'est
-// retenu — deux clients peuvent viser le dernier exemplaire et le second
-// se voir refuser après avoir viré l'argent. D'où le message ci-dessous,
-// qui renvoie vers les organisateurs plutôt que de clore la porte.
-//
-// Le point d'entrée est public : n'importe qui connaissant une référence
-// peut poster. D'où les bornes ci-dessous.
-
-// Vercel coupe les requêtes de plus de 4,5 Mo avant même d'atteindre ce
-// code : au-delà, le client voit une connexion interrompue et non un
-// message. On reste donc sous ce plafond pour que le refus soit lisible.
-export const TAILLE_MAX = 4 * 1024 * 1024; // 4 Mo
+export const TAILLE_MAX = 2 * 1024 * 1024; 
 const TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/heic']);
 
 const erreur = (message, status = 400) => Response.json({ message }, { status });

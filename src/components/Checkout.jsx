@@ -12,7 +12,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { lineId } from '@/libs/cart';
-import { validateForm } from '@/libs/validation'; // On garde la validation, mais on ne l'exporte plus d'un hook
+import { useCheckoutForm } from '@/hooks/useCheckoutForm';
 import { formatPrice } from '@/libs/currency';
 import {MOYEN_PAR_DEFAUT, PAIEMENTS, } from '@/libs/stockage/contrat';
 import {
@@ -21,9 +21,13 @@ import {
   Row,
   ChoixMoyen,
   ConfirmButton,
+  INTERAC_EMAIL,
 } from '@/components/PaymentMarks';
 import { useOrderSubmission } from '@/hooks/useOrderSubmission';
 import { useProofUpload } from '@/hooks/useProofUpload';
+
+
+
 
 const emptyForm = { email: '', firstName: '', lastName: '', moyen: MOYEN_PAR_DEFAUT };
 
@@ -40,18 +44,8 @@ export default function Checkout({
 
   const { status, globalError, submitOrder } = useOrderSubmission();
   const { fichier, envoiPreuve, erreurPreuve, handleFileChange, envoyerPreuve } = useProofUpload(onPreuveEnvoyee);
-  const [form, setForm] = useState(emptyForm);
-  const [errors, setErrors] = useState({});
   const [copie, setCopie] = useState(false);
-  const setField = (field) => (value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
-  };
-
-
-  const resetForm = () => {
-    setForm(emptyForm);
-    setErrors({});
-  };
+  const { form, setForm, setField, errors, validateForm, resetForm } = useCheckoutForm();
 
   const copier = async (texte) => {
     try {
@@ -65,7 +59,7 @@ export default function Checkout({
 
   const handleSubmit = async (ev) => {
     ev.preventDefault();
-    if (!validateForm(form)) return;
+    if (!validateForm()) return;
 
     try {
       const data = await submitOrder(form, cart);
@@ -234,7 +228,7 @@ export default function Checkout({
 
                 <button
                   type="button"
-                  onClick={() => envoyerPreuve(order.ref)}
+                  onClick={() => envoyerPreuve(order.ref,order.email,order.firstName)}
                   disabled={!fichier || envoiPreuve}
                   className="mt-3 w-full cursor-pointer rounded-lg bg-bordeaux-700 py-2.5 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:bg-bordeaux-800 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
                 >
@@ -242,11 +236,6 @@ export default function Checkout({
                 </button>
               </div>
             )}
-
-            <p className="mt-4 text-center text-xs leading-relaxed text-amber-700">
-              Notez cette référence avant de fermer : aucun e-mail de
-              confirmation n’est envoyé automatiquement.
-            </p>
 
             <p className="mt-2 text-center text-xs leading-relaxed text-stone-400">
               Un problème avec ta commande ? Écris-nous à{' '}

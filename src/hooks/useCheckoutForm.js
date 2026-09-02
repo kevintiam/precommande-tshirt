@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { validate } from "@/libs/validation";
+import { MOYEN_PAR_DEFAUT } from "@/libs/stockage/contrat";
 
 const emptyForm = {
   email: "",

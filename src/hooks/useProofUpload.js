@@ -8,14 +8,13 @@ export function useProofUpload(onSuccess) {
   const [envoiPreuve, setEnvoiPreuve] = useState(false);
   const [erreurPreuve, setErreurPreuve] = useState('');
 
-
   const handleFileChange = (e) => {
     const choisi = e.target.files?.[0] ?? null;
 
     if (choisi && choisi.size > TAILLE_MAX_PREUVE) {
       setFichier(null);
       setErreurPreuve(
-        'Image trop lourde : 2 Mo maximum. Réduis-la ou fais une capture plus petite.'
+        'Image trop lourde : 2 Mo maximum.'
       );
       return;
     }
@@ -24,8 +23,7 @@ export function useProofUpload(onSuccess) {
     setErreurPreuve('');
   };
 
-
-  const envoyerPreuve = async (orderRef) => {
+  const envoyerPreuve = async (orderRef, email, firstName) => {
     if (!fichier || envoiPreuve) return;
     setEnvoiPreuve(true);
     setErreurPreuve('');
@@ -43,6 +41,22 @@ export function useProofUpload(onSuccess) {
 
       if (!res.ok) {
         throw new Error(data.message || `Erreur ${res.status}.`);
+      }
+      
+      // Envoi de l'e-mail APRES le succès de l'image
+      try {
+        await fetch('/api/sendReceipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: email,
+            customerName: firstName || "Client",
+            orderId: orderRef,
+          }),
+        });
+        console.log("E-mail envoyé avec succès !");
+      } catch (mailError) {
+        console.error("L'image est passée, mais l'e-mail a échoué :", mailError);
       }
 
       setFichier(null);
