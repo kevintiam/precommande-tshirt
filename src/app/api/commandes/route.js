@@ -6,17 +6,13 @@ import {
 } from '@/libs/commandes';
 import { lireCatalogue } from '@/libs/catalogue';
 import {
+  ALPHABET_REFERENCE as ALPHABET,
   isValidEmail,
   isValidName,
   moyenValide,
   validateLignes,
 } from '@/libs/validation';
 
-
-// Alphabet sans O/0/I/1/L : la référence est recopiée à la main dans le
-// message du virement Interac, une ambiguïté visuelle coûte un
-// rapprochement raté.
-const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
 const genererReference = () =>
   'CR-' +
@@ -50,21 +46,13 @@ export async function POST(request) {
 
   const { email, firstName, lastName, lignes, clientToken, moyen } = corps ?? {};
 
-  // Le navigateur peut envoyer n'importe quoi : la validation du
-  // formulaire tourne côté client et se contourne trivialement. Tout est
-  // revalidé ici, et le prix est relu depuis le catalogue.
   if (!isValidEmail(email)) return erreur('E-mail invalide.');
   if (!isValidName(firstName)) return erreur('Prénom requis.');
   if (!isValidName(lastName)) return erreur('Nom requis.');
-  // Absent = onglet ouvert avant la mise en ligne de PayPal, dont le
-  // bundle ne connaît que l'Interac : on retombe dessus plutôt que de lui
-  // opposer un refus qu'il ne peut pas comprendre. Présent mais
-  // méconnaissable, en revanche, c'est une requête forgée : on refuse.
+
   const moyenRetenu = moyen === undefined ? MOYEN_PAR_DEFAUT : moyen;
   if (!moyenValide(moyenRetenu)) return erreur('Moyen de paiement inconnu.');
 
-  // Un rejeu du même jeton reprend la commande existante au lieu d'en
-  // créer une seconde — et surtout, sans redécrémenter le stock.
   if (typeof clientToken === 'string' && clientToken) {
     try {
       const dejaVue = await lireParJeton(clientToken);
@@ -82,7 +70,6 @@ export async function POST(request) {
   try {
     catalogue = await lireCatalogue();
   } catch (err) {
-    // Sans catalogue, impossible de connaître ni les prix ni le stock.
     console.error('[commandes] catalogue illisible :', err);
     return erreur(indisponible, 503);
   }
@@ -90,9 +77,6 @@ export async function POST(request) {
   const refus = validateLignes(lignes, catalogue);
   if (refus) return erreur(refus);
 
-  // Le panier est valide : on le recopie depuis le CATALOGUE, jamais
-  // depuis la requête. Le nom et le prix enregistrés sont donc les nôtres,
-  // quoi qu'ait envoyé le navigateur.
   const detail = lignes.map((l) => {
     const produit = catalogue.find((p) => p.id === l.productId);
     return {
@@ -105,13 +89,6 @@ export async function POST(request) {
   });
 
   const total = detail.reduce((s, l) => s + l.prixUnitaire * l.qty, 0);
-
-  // Le stock n'est PAS décrémenté ici. Il ne part qu'à la déclaration de
-  // paiement (POST .../preuve), pour qu'un panier abandonné ne retienne
-  // jamais d'article. `validateLignes` a vérifié la disponibilité juste
-  // au-dessus, mais sans rien réserver : c'est un avertissement, pas une
-  // garantie. La seule barrière contre la survente est la réservation
-  // atomique du côté de la preuve.
   const commande = {
     ref: genererReference(),
     clientToken: clientToken ?? null,
@@ -128,7 +105,6 @@ export async function POST(request) {
   try {
     await creerCommande(commande);
   } catch (err) {
-    // Aucun stock à restituer : rien n'a été décrémenté à ce stade.
     console.error('[commandes] enregistrement impossible :', err);
     return erreur(indisponible, 503);
   }

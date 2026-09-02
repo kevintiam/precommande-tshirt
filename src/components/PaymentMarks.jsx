@@ -4,16 +4,8 @@ import { formatPrice } from '@/libs/currency';
 // Adresse recevant les virements Interac. À remplacer par celle de l'organisation.
 export const INTERAC_EMAIL = 'ImpactcampADN26@gmail.com';
 
-// ⚠️ À REMPLACER — adresse du compte PayPal de l'organisation.
-// Tant que cette valeur n'est pas la bonne, les paiements PayPal
-// partiront dans le vide : c'est la seule chose à changer pour ouvrir
-// ce moyen de paiement.
 export const PAYPAL_EMAIL = 'ImpactcampADN26@gmail.com';
 
-// Lien paypal.me, s'il existe. Il évite au client de recopier l'adresse
-// et le montant à la main — de loin la source d'erreur la plus fréquente.
-// Laisser à null si l'organisation n'en a pas : le bloc s'affiche alors
-// avec l'adresse seule, sans bouton mort.
 export const PAYPAL_ME = null;
 
 function Section({ title, children }) {

@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { Lock, PackageCheck } from 'lucide-react';
 import { INTERAC_EMAIL } from '@/components/PaymentMarks';
+import SuiviCommande from '@/components/SuiviCommande';
 
 
 export default function BoutiqueClose() {
@@ -45,13 +46,12 @@ export default function BoutiqueClose() {
         </p>
         <p className="mt-2 text-sm leading-relaxed text-stone-600">
           Votre commande reste valide et le retrait se fera sur place pendant
-          le camp. Rien à refaire : ouvrez le lien de suivi reçu au moment de
-          la commande pour consulter son état ou joindre votre capture de
-          paiement.
+          le camp. Entrez votre référence pour consulter son état ou joindre
+          votre capture de paiement.
         </p>
-        <p className="mt-3 rounded-lg bg-stone-50 px-3 py-2 font-mono text-xs text-stone-500">
-          /commande/<span className="text-stone-900">CR-XXXXXX</span>
-        </p>
+        <div className="mt-3">
+          <SuiviCommande compact />
+        </div>
       </div>
 
       <p className="mt-6 text-center text-xs leading-relaxed text-stone-400">

@@ -1,35 +1,65 @@
-// Contrat commun à toutes les implémentations de stockage.
+const INTERAC_EMAIL = 'ImpactcampADN26@gmail.com';
+const PAYPAL_EMAIL = 'ImpactcampADN26@gmail.com';
+const PAYPAL_ME = null;
 
-// Cycle de vie d'une commande, du panier au t-shirt remis.
+function InteracMark({ className = '' }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[#FFB92E] text-xs font-bold text-stone-950">
+        e
+      </span>
+      <span className="font-bold text-stone-900">Interac</span>
+    </span>
+  );
+}
+
+function PaypalMark({ className = '' }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 ${className}`}>
+      <span className="flex h-5 w-5 flex-none items-center justify-center rounded-full bg-[#003087] text-xs font-bold italic text-white">
+        P
+      </span>
+      <span className="font-bold italic text-[#003087]">PayPal</span>
+    </span>
+  );
+}
+
 export const STATUTS = {
-  EN_ATTENTE: 'en_attente_paiement', // créée, virement pas encore reçu
-  // Le client déclare avoir payé et a joint une capture. Ce n'est PAS une
-  // preuve : une capture se falsifie et se réutilise. C'est un signal qui
-  // dit « regarde ce virement », rien de plus. Seule une vérification au
-  // relevé bancaire fait passer à PAYEE.
+  EN_ATTENTE: 'en_attente_paiement',
   A_VERIFIER: 'a_verifier',
-  PAYEE: 'payee', // virement reçu, confirmé à la main dans la feuille
-  ECHOUEE: 'echouee', // refus, annulation, expiration
+  PAYEE: 'payee', 
+  ECHOUEE: 'echouee', 
 };
 
-// Moyens de paiement proposés à la caisse.
-//
-// Les deux fonctionnent EXACTEMENT pareil du point de vue du site : le
-// client paie hors d'ici depuis son application, joint une capture, et
-// le trésorier confirme au vu du compte. Aucun paiement n'est encaissé
-// par ce serveur, ni par Interac ni par PayPal.
-//
-// Le moyen n'est donc retenu que pour une raison : dire au trésorier OÙ
-// vérifier. Chercher au relevé bancaire un paiement arrivé sur PayPal
-// est la façon la plus sûre de déclarer un virement manquant.
 export const MOYENS = {
   INTERAC: 'interac',
   PAYPAL: 'paypal',
 };
+export const PAIEMENTS = {
+  [MOYENS.INTERAC]: {
+    Marque: InteracMark,
+    note: 'Virement bancaire',
+    nom: 'Virement Interac',
+    destinataire: INTERAC_EMAIL,
+    lien: null,
+    consigne: (ref) =>
+      `Indiquez la référence ${ref} dans le message du virement : c’est elle qui permet d’associer votre paiement à votre commande.`,
+    apresPaiement:
+      'Joins la capture d’écran de ta confirmation Interac. Elle nous permet de retrouver ton paiement et d’accélérer la validation.',
+  },
+  [MOYENS.PAYPAL]: {
+    Marque: PaypalMark,
+    note: 'Depuis ton compte',
+    nom: 'PayPal',
+    destinataire: PAYPAL_EMAIL,
+    lien: PAYPAL_ME,
+    consigne: (ref) =>
+      `Indiquez la référence ${ref} dans la note du paiement. Si PayPal vous le propose, choisissez « Entre proches » : le camp reçoit alors la totalité du montant.`,
+    apresPaiement:
+      'Joins la capture d’écran de ta confirmation PayPal. Elle nous permet de retrouver ton paiement et d’accélérer la validation.',
+  },
+};
 
 export const MOYEN_PAR_DEFAUT = MOYENS.INTERAC;
 
-// Levée quand le stockage refuse d'écrire : disque en lecture seule,
-// feuille non partagée, quota Google atteint. Distinguer ce cas d'un vrai
-// bug permet de répondre 503 avec un message lisible plutôt qu'un 500.
 export class StockageIndisponible extends Error {}

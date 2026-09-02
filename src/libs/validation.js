@@ -1,10 +1,28 @@
 import { taillesDe, restantPour } from '@/libs/produit';
 import { MOYENS } from '@/libs/stockage/contrat';
 
-// Bornes d'une commande. Elles vivent ici et non dans la route, pour que
-// la règle et son contrôle ne puissent pas diverger.
+
 export const MAX_QTY = 20;
 export const MAX_LIGNES = 20;
+
+export const ALPHABET_REFERENCE = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+export const normaliserReference = (saisie) => {
+  const nettoye = String(saisie ?? '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
+
+  if (!nettoye.startsWith('CR')) {
+    return null;
+  }
+
+  const noyau = nettoye.slice(2);
+
+  if (noyau.length !== 6) {
+    return null;
+  }
+  return `CR-${noyau}`;
+};
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -14,11 +32,6 @@ export const isValidEmail = (email) =>
 export const isValidName = (nom) =>
   typeof nom === 'string' && nom.trim().length > 0;
 
-// Validation du formulaire, côté navigateur. Renvoie un objet d'erreurs
-// par champ, que Checkout affiche sous chaque saisie.
-//
-// Retrait sur place et paiement par virement Interac hors du site : ni
-// adresse de livraison ni donnée bancaire ne sont saisies ici.
 export const validate = (form) => {
   const e = {};
   if (!isValidEmail(form.email)) e.email = 'E-mail invalide';
@@ -34,19 +47,10 @@ export const createSet = (setForm) => (key) => (e) => {
   setForm((f) => ({ ...f, [key]: value }));
 };
 
-// Le moyen de paiement vient du navigateur : on ne garde que les deux
-// valeurs connues. Sans ce filtre, n'importe quoi finirait dans la
-// feuille du trésorier, jusqu'à une formule si la chaîne commence par
-// « = ».
+
 export const moyenValide = (moyen) =>
   Object.values(MOYENS).includes(moyen);
 
-// Validation des lignes de commande, côté serveur. Renvoie un message
-// d'erreur ou null — pas d'exception : un panier invalide est un cas
-// prévu, pas un incident.
-//
-// Les noms de champs sont ceux qu'envoie réellement le navigateur
-// (`productId`, `size`), pas ceux du catalogue.
 export const validateLignes = (lignes, catalogue) => {
   if (!Array.isArray(lignes) || lignes.length === 0) return 'Votre panier est vide.';
   if (lignes.length > MAX_LIGNES)
@@ -85,3 +89,9 @@ export const validateLignes = (lignes, catalogue) => {
 
   return null;
 };
+
+  export const validateForm = (form) => {
+    const err = validate(form);
+    setErrors(err);
+    return Object.keys(err).length === 0;
+  };

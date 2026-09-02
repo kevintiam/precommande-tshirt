@@ -2,6 +2,7 @@ import { ShieldCheck } from 'lucide-react';
 import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Boutique from '@/components/Boutique';
+import SuiviCommande from '@/components/SuiviCommande';
 import BoutiqueClose from '@/components/BoutiqueClose';
 import { products as amorce } from '@/data/products';
 import {
@@ -84,15 +85,17 @@ export default async function Home() {
       <Header />
 
       <main className="mx-auto w-full max-w-2xl flex-1 px-5 py-8">
-        {/* <Hero /> */}
+        <Hero />
 
-        {/* <Boutique products={produits} /> */}
-        <BoutiqueClose />
+        <Boutique products={produits} />
+        {/* <BoutiqueClose /> */}
 
-        {/* <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-stone-400">
+        <SuiviCommande />
+
+        <p className="mt-4 flex items-center justify-center gap-1.5 text-center text-xs text-stone-400">
           <ShieldCheck className="h-3.5 w-3.5 flex-none" />
           Paiement par virement Interac et paypal uniquement.
-        </p> */}
+        </p>
       </main>
 
       <footer className="border-t border-stone-200 px-5 py-6">

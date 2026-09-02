@@ -1,17 +1,6 @@
 import { formatPrice } from '@/libs/currency';
 import { rangTaille } from '@/libs/produit';
 
-// Panneau de synthèse affiché à côté de la liste des commandes : combien de
-// pièces sont parties, sur quel modèle et dans quelle taille. C'est ce qui
-// sert à commander le réassort auprès de l'imprimeur.
-//
-// Composant serveur : il ne fait que lire les commandes déjà chargées par la
-// page. Le `router.refresh()` d'AdminCommandes le recalcule après chaque
-// changement de statut.
-
-// Les commandes échouées ne comptent nulle part : ni vendues, ni à imprimer.
-// Le reste se lit en deux temps — « payé » est acquis, « en attente » est ce
-// qui peut encore basculer d'un côté ou de l'autre.
 const agreger = (commandes, statuts) => {
   const parProduit = new Map();
 
@@ -54,18 +43,11 @@ const agreger = (commandes, statuts) => {
     .sort((a, b) => b.total - a.total || a.nom.localeCompare(b.nom, 'fr'));
 };
 
-// Le nom complet (« T-shirt IMPACT — Bordeaux, logo dégradé ») déborde d'une
-// colonne étroite. Le tiret cadratin sépare la famille de la variante : on
-// garde les deux, mais sur deux lignes.
 const scinderNom = (nom) => {
   const [famille, ...reste] = nom.split(' — ');
   return [famille, reste.join(' — ')];
 };
 
-// Une tuile compte des PIÈCES et rappelle en dessous combien de commandes
-// les portent : les deux nombres diffèrent toujours (un panier contient
-// souvent deux t-shirts) et sans ce rappel l'écart avec les onglets de la
-// liste, qui comptent des commandes, ressemble à une erreur.
 function Tuile({ pieces, nbCommandes, couleur, texte }) {
   return (
     <div className="rounded-xl border border-stone-200 p-3">

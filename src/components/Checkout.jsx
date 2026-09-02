@@ -12,73 +12,20 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { lineId } from '@/libs/cart';
-import { validate, createSet } from '@/libs/validation';
+import { validateForm } from '@/libs/validation'; // On garde la validation, mais on ne l'exporte plus d'un hook
 import { formatPrice } from '@/libs/currency';
-import { MOYENS, MOYEN_PAR_DEFAUT } from '@/libs/stockage/contrat';
+import {MOYEN_PAR_DEFAUT, PAIEMENTS, } from '@/libs/stockage/contrat';
 import {
   Section,
   Field,
   Row,
-  InteracMark,
-  PaypalMark,
   ChoixMoyen,
   ConfirmButton,
-  INTERAC_EMAIL,
-  PAYPAL_EMAIL,
-  PAYPAL_ME,
 } from '@/components/PaymentMarks';
+import { useOrderSubmission } from '@/hooks/useOrderSubmission';
+import { useProofUpload } from '@/hooks/useProofUpload';
 
-// Tout ce qui distingue les deux moyens, en un seul endroit. Le parcours,
-// lui, est identique : le client paie depuis son application, revient
-// téléverser sa capture, le trésorier confirme. Rien n'est encaissé ici.
-const PAIEMENTS = {
-  [MOYENS.INTERAC]: {
-    Marque: InteracMark,
-    note: 'Virement bancaire',
-    nom: 'Virement Interac',
-    destinataire: INTERAC_EMAIL,
-    lien: null,
-    // La référence voyage dans le champ « message » du virement : c'est
-    // le seul lien entre l'argent reçu et la commande.
-    consigne: (ref) =>
-      `Indiquez la référence ${ref} dans le message du virement : c’est elle qui permet d’associer votre paiement à votre commande.`,
-    apresPaiement:
-      'Joins la capture d’écran de ta confirmation Interac. Elle nous permet de retrouver ton paiement et d’accélérer la validation.',
-  },
-  [MOYENS.PAYPAL]: {
-    Marque: PaypalMark,
-    note: 'Depuis ton compte',
-    nom: 'PayPal',
-    destinataire: PAYPAL_EMAIL,
-    lien: PAYPAL_ME,
-    // « Entre proches » évite les frais au camp. On le demande sans en
-    // faire une condition : un envoi classique reste parfaitement valide.
-    consigne: (ref) =>
-      `Indiquez la référence ${ref} dans la note du paiement. Si PayPal vous le propose, choisissez « Entre proches » : le camp reçoit alors la totalité du montant.`,
-    apresPaiement:
-      'Joins la capture d’écran de ta confirmation PayPal. Elle nous permet de retrouver ton paiement et d’accélérer la validation.',
-  },
-};
-
-const emptyForm = {
-  email: '',
-  firstName: '',
-  lastName: '',
-  moyen: MOYEN_PAR_DEFAUT,
-};
-
-// Jeton d'idempotence : identifie une tentative de commande, pas une
-// commande. Tant que le navigateur n'a pas vu de réponse réussie, il
-// renvoie le même — le serveur reconnaît alors le rejeu au lieu de créer
-// un doublon. randomUUID exige un contexte sécurisé, d'où le repli.
-// Doit rester aligné sur TAILLE_MAX de la route d'envoi. Dupliqué plutôt
-// qu'importé : la route est du code serveur, l'importer ferait entrer ses
-// dépendances dans le bundle du navigateur.
-const TAILLE_MAX_PREUVE = 4 * 1024 * 1024;
-
-const nouveauJeton = () =>
-  globalThis.crypto?.randomUUID?.() ??
-  `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const emptyForm = { email: '', firstName: '', lastName: '', moyen: MOYEN_PAR_DEFAUT };
 
 export default function Checkout({
   cart,
@@ -90,124 +37,56 @@ export default function Checkout({
   onTerminer,
   onPreuveEnvoyee,
 }) {
+
+  const { status, globalError, submitOrder } = useOrderSubmission();
+  const { fichier, envoiPreuve, erreurPreuve, handleFileChange, envoyerPreuve } = useProofUpload(onPreuveEnvoyee);
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
-  const [status, setStatus] = useState('form'); // 'form' | 'processing'
   const [copie, setCopie] = useState(false);
-  const [jeton, setJeton] = useState(nouveauJeton);
-  const [fichier, setFichier] = useState(null);
-  const [envoiPreuve, setEnvoiPreuve] = useState(false);
-  const [erreurPreuve, setErreurPreuve] = useState('');
+  const setField = (field) => (value) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
 
-  const set = createSet(setForm);
 
-  if (vue === null) return null;
+  const resetForm = () => {
+    setForm(emptyForm);
+    setErrors({});
+  };
 
-  const confirmation = vue === 'confirmation' && order;
+  const copier = async (texte) => {
+    try {
+      await navigator.clipboard.writeText(texte);
+      setCopie(true);
+      setTimeout(() => setCopie(false), 2000);
+    } catch {
+      setCopie(false);
+    }
+  };
 
   const handleSubmit = async (ev) => {
     ev.preventDefault();
-    const e = validate(form);
-    setErrors(e);
-    if (Object.keys(e).length > 0) return;
-
-    setStatus('processing');
-
-    let data;
-    try {
-      const res = await fetch('/api/commandes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          clientToken: jeton,
-          lignes: cart.map((i) => ({
-            productId: i.product.id,
-            size: i.size,
-            qty: i.qty,
-          })),
-        }),
-      });
-
-      // Une erreur serveur renvoie souvent une page HTML, pas du JSON :
-      // on lit le texte brut pour pouvoir le tracer, et on retombe sur
-      // le code HTTP quand aucun message exploitable n'est fourni.
-      const brut = await res.text();
-      try {
-        data = brut ? JSON.parse(brut) : {};
-      } catch {
-        console.error('Réponse non JSON de /api/commandes :', brut.slice(0, 500));
-        data = {};
-      }
-
-      if (!res.ok) {
-        throw new Error(data.message || `Le serveur a répondu ${res.status}.`);
-      }
-    } catch (err) {
-      console.error('Commande refusée :', err);
-      setStatus('form');
-      setErrors({
-        global:
-          err.message ||
-          'Connexion interrompue. Réessayez : votre commande ne sera pas créée en double.',
-      });
-      return;
-    }
-
-    // Hors du try, délibérément. Une erreur d'affichage après cette ligne
-    // ne doit jamais faire croire que la commande a échoué : elle est
-    // enregistrée côté serveur, et l'utilisateur recliquerait pour rien.
-    setStatus('form');
-    setJeton(nouveauJeton()); // la commande suivante sera bien distincte
-    onConfirmed(data);
-  };
-
-  const envoyerPreuve = async () => {
-    if (!fichier || envoiPreuve) return;
-    setEnvoiPreuve(true);
-    setErreurPreuve('');
+    if (!validateForm(form)) return;
 
     try {
-      const donnees = new FormData();
-      donnees.append('capture', fichier);
-      // Surtout pas d'en-tête Content-Type ici : le navigateur doit poser
-      // lui-même la frontière multipart, sinon le serveur ne sait pas
-      // découper le corps de la requête.
-      const res = await fetch(`/api/commandes/${order.ref}/preuve`, {
-        method: 'POST',
-        body: donnees,
-      });
-
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message || `Erreur ${res.status}.`);
-
-      setFichier(null);
-      onPreuveEnvoyee();
-    } catch (err) {
-      console.error('Envoi de la capture impossible :', err);
-      setErreurPreuve(err.message || 'Envoi impossible. Réessaie.');
-    } finally {
-      setEnvoiPreuve(false);
+      const data = await submitOrder(form, cart);
+      onConfirmed(data);
+    } catch {
     }
   };
 
   const handleClose = () => {
     if (status === 'processing') return;
+    resetForm();
     onClose();
-    setForm(emptyForm);
-    setErrors({});
   };
 
   const handleBackdrop = (ev) => {
     if (ev.target === ev.currentTarget) handleClose();
   };
 
-  // Le moyen fait foi tel que le SERVEUR l'a enregistré : sur un rejeu,
-  // la commande existante peut avoir été passée avec l'autre moyen.
+  const confirmation = vue === 'confirmation' && order;
   const paiement = PAIEMENTS[order?.moyen] ?? PAIEMENTS[MOYEN_PAR_DEFAUT];
 
-  // Les trois informations que le client doit reporter dans son
-  // application, sous une forme copiable d'un geste.
   const infosVirement = order
     ? [
         `${paiement.nom} — Camp Impact ADN`,
@@ -217,23 +96,16 @@ export default function Checkout({
       ].join('\n')
     : '';
 
-  const copier = async () => {
-    try {
-      await navigator.clipboard.writeText(infosVirement);
-      setCopie(true);
-      setTimeout(() => setCopie(false), 2000);
-    } catch {
-      // Presse-papiers refusé (contexte non sécurisé, permission) :
-      // les informations restent lisibles et sélectionnables à l'écran.
-      setCopie(false);
-    }
-  };
-
   const lienMail = order
     ? `mailto:${order.email}?subject=${encodeURIComponent(
         `Commande ${order.ref} — Camp Impact ADN`
       )}&body=${encodeURIComponent(infosVirement)}`
     : '';
+
+  // ════════════════════════════════════════════════
+  // 6. RENDU JSX (inchangé, mais utilisant les hooks)
+  // ════════════════════════════════════════════════
+  if (vue === null) return null;
 
   return (
     <div
@@ -285,8 +157,6 @@ export default function Checkout({
                 <Row label="Référence" value={order.ref} />
               </div>
 
-              {/* Raccourci vers l'application : il pré-remplit le
-                  destinataire, ce que la recopie à la main rate souvent. */}
               {paiement.lien && (
                 <a
                   href={paiement.lien}
@@ -304,12 +174,11 @@ export default function Checkout({
               </p>
             </div>
 
-            {/* Aucun e-mail n'étant envoyé, ces deux boutons sont les seuls
-                moyens pour le client d'emporter la référence avec lui. */}
+            {/* Boutons Copier / M'envoyer ça */}
             <div className="mt-3 grid grid-cols-2 gap-2">
               <button
                 type="button"
-                onClick={copier}
+                onClick={() => copier(infosVirement)}
                 className="flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-stone-300 py-2.5 text-sm font-medium text-stone-700 transition-colors hover:bg-stone-50"
               >
                 {copie ? (
@@ -350,21 +219,7 @@ export default function Checkout({
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp,image/heic"
-                  onChange={(e) => {
-                    const choisi = e.target.files?.[0] ?? null;
-                    // Contrôle avant l'envoi : au-delà de la limite, la
-                    // requête serait coupée en route et le client verrait
-                    // une erreur réseau incompréhensible.
-                    if (choisi && choisi.size > TAILLE_MAX_PREUVE) {
-                      setFichier(null);
-                      setErreurPreuve(
-                        'Image trop lourde : 4 Mo maximum. Réduis-la ou fais une capture plus petite.'
-                      );
-                      return;
-                    }
-                    setFichier(choisi);
-                    setErreurPreuve('');
-                  }}
+                  onChange={handleFileChange}
                   className="mt-3 block w-full cursor-pointer text-xs text-stone-600 file:mr-3 file:cursor-pointer file:rounded-lg file:border file:border-stone-300 file:bg-white file:px-3 file:py-2 file:text-xs file:font-medium file:text-stone-700 hover:file:bg-stone-50"
                 />
 
@@ -379,7 +234,7 @@ export default function Checkout({
 
                 <button
                   type="button"
-                  onClick={envoyerPreuve}
+                  onClick={() => envoyerPreuve(order.ref)}
                   disabled={!fichier || envoiPreuve}
                   className="mt-3 w-full cursor-pointer rounded-lg bg-bordeaux-700 py-2.5 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:bg-bordeaux-800 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
                 >
@@ -410,6 +265,7 @@ export default function Checkout({
             </button>
           </div>
         ) : (
+          // --- VUE FORMULAIRE ---
           <form onSubmit={handleSubmit} className="space-y-7 px-5 py-6">
             {/* Récapitulatif */}
             <section>
@@ -455,11 +311,12 @@ export default function Checkout({
               </div>
             </section>
 
+            {/* Coordonnées */}
             <Section title="Coordonnées">
               <Field
                 label="E-mail"
                 value={form.email}
-                onChange={set('email')}
+                onChange={setField('email')}
                 error={errors.email}
                 type="email"
                 placeholder="vous@exemple.com"
@@ -469,20 +326,21 @@ export default function Checkout({
                 <Field
                   label="Prénom"
                   value={form.firstName}
-                  onChange={set('firstName')}
+                  onChange={setField('firstName')}
                   error={errors.firstName}
                   autoComplete="given-name"
                 />
                 <Field
                   label="Nom"
                   value={form.lastName}
-                  onChange={set('lastName')}
+                  onChange={setField('lastName')}
                   error={errors.lastName}
                   autoComplete="family-name"
                 />
               </div>
             </Section>
 
+            {/* Paiement */}
             <Section title="Paiement">
               <ChoixMoyen
                 valeur={form.moyen}
@@ -498,13 +356,14 @@ export default function Checkout({
               </p>
             </Section>
 
+            {/* Erreur globale + Bouton de confirmation */}
             <div>
-              {errors.global && (
+              {globalError && (
                 <p
                   role="alert"
                   className="mb-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
                 >
-                  {errors.global}
+                  {globalError}
                 </p>
               )}
               <ConfirmButton

@@ -10,6 +10,12 @@
 // pièces commandées à l'imprimeur, pas des estimations : on ne peut pas
 // en vendre une de plus.
 //
+// PRIX : ce sont les prix de VENTE, pas les coûts du bon de commande.
+// La boutique majore de 5 $ (t-shirt 30 $ pour 25 de coût, hoodie 50 $
+// pour 45) ; le tote bag est à 12 $ pour 10. Ne jamais remettre le coût
+// dans ce champ : `catalogue:resync` l'écrit tel quel dans la boutique,
+// et baisserait tous les prix d'un coup.
+//
 // Changer une quantité ICI ne suffit pas : `restant`, ce que la boutique
 // vend réellement, n'est jamais réécrit par le fichier. Il faut ensuite
 // `npm run stock:realigner`.
@@ -27,7 +33,7 @@ export const products = [
     name: 'T-shirt IMPACT — Bordeaux, logo dégradé',
     description:
       'Coupe oversize, col rond côtelé. Logo IMPACT en arche dégradée rouge à bleu, surmontant l’ovale « CAMP ADN ».',
-    price: 25,
+    price: 30,
     image: '/images/01.PNG',
     stock: { S: 8, M: 10, L: 14, XL: 10, XXL: 1, XXXL: 2, XXXXL: 0 },
   },
@@ -36,7 +42,7 @@ export const products = [
     name: 'T-shirt IMPACT — Bordeaux, logo blanc',
     description:
       'La version sobre du t-shirt bordeaux : logo IMPACT et ovale « CAMP ADN » imprimés en blanc.',
-    price: 25,
+    price: 30,
     image: '/images/03.PNG',
     images: ['/images/03.PNG', '/images/02.PNG'],
     stock: { S: 2, M: 15, L: 20, XL: 10, XXL: 2, XXXL: 1, XXXXL: 0 },
@@ -46,7 +52,7 @@ export const products = [
     name: 'T-shirt IMPACT — Blanc, logo dégradé',
     description:
       'T-shirt blanc coupe oversize. Le dégradé rouge à bleu du logo ressort pleinement sur le fond clair.',
-    price: 25,
+    price: 30,
     image: '/images/05.PNG',
     stock: { S: 0, M: 2, L: 3, XL: 1, XXL: 0, XXXL: 0, XXXXL: 0 },
   },
@@ -55,43 +61,43 @@ export const products = [
     name: 'Hoodie IMPACT — Bordeaux, logo dégradé',
     description:
       'Sweat à capuche molletonné, poche kangourou et bords côtelés. Logo IMPACT en dégradé rouge à bleu.',
-    price: 45,
+    price: 50,
     image: '/images/04.PNG',
-    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100, XXXL: 100, XXXXL: 100 },
+    stock: { S: 0, M: 10, L: 17, XL: 11, XXL: 7, XXXL: 0, XXXXL: 0 },
   },
   {
     id: 'hoodie-bordeaux-blanc',
     name: 'Hoodie IMPACT — Bordeaux, logo blanc',
     description:
       'Le hoodie bordeaux avec le logo IMPACT imprimé en blanc. Capuche doublée et poche kangourou.',
-    price: 45,
+    price: 50,
     image: '/images/07.PNG',
-    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100, XXXL: 100, XXXXL: 100 },
+    stock: { S: 0, M: 12, L: 18, XL: 13, XXL: 8, XXXL: 0, XXXXL: 0 },
   },
   {
     id: 'hoodie-bleu-blanc',
     name: 'Hoodie IMPACT — Bleu roi, logo blanc',
     description:
       'Sweat à capuche bleu roi, logo IMPACT et ovale « CAMP ADN » en blanc. Coupe ample.',
-    price: 45,
+    price: 50,
     image: '/images/06.PNG',
-    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100, XXXL: 100, XXXXL: 100 },
+    stock: { S: 0, M: 3, L: 1, XL: 1, XXL: 1, XXXL: 0, XXXXL: 0 },
   },
   {
     id: 'hoodie-blanc-degrade',
     name: 'Hoodie IMPACT — Blanc, logo dégradé',
     description:
       'Sweat à capuche blanc, molletonné, avec le logo IMPACT en dégradé rouge à bleu.',
-    price: 45,
+    price: 50,
     image: '/images/08.PNG',
-    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100, XXXL: 100, XXXXL: 100 },
+    stock: { S: 0, M: 3, L: 4, XL: 3, XXL: 2, XXXL: 0, XXXXL: 0 },
   },
   {
     id: 'tee-disciple-noir-degrade',
     name: 'T-shirt DISCIPLE — Noir, dégradé',
     description:
       'Impression recto-verso. « DISCIPLE » et sa flamme sur le devant, « à l’image de Christ » en lettres gothiques au dos, dégradé rouge à bleu.',
-    price: 25,
+    price: 30,
     image: '/images/09.PNG',
     imagePosition: 'left',
     stock: { S: 3, M: 7, L: 11, XL: 5, XXL: 2, XXXL: 2, XXXXL: 0 },
@@ -101,7 +107,7 @@ export const products = [
     name: 'T-shirt DISCIPLE — Blanc, dégradé',
     description:
       'La même impression recto-verso sur fond blanc, avec « à l’image de Dieu » au dos. Le dégradé rouge à bleu ressort pleinement.',
-    price: 25,
+    price: 30,
     // image: '/images/10.PNG',
     images: ['/images/10-1.PNG', '/images/10-2.PNG'],
     imagePosition: 'left',
@@ -112,7 +118,7 @@ export const products = [
     name: 'T-shirt DISCIPLE — Noir, logo blanc',
     description:
       'La version sobre : « DISCIPLE » en blanc sur le devant, « à l’image de Dieu » en gothique blanc au dos.',
-    price: 25,
+    price: 30,
     image: '/images/11.PNG',
     imagePosition: 'left',
     stock: { S: 3, M: 11, L: 7, XL: 8, XXL: 1, XXXL: 0, XXXXL: 0 },
@@ -126,29 +132,29 @@ export const products = [
     name: 'Hoodie DISCIPLE — Blanc',
     description:
       'Sweat à capuche blanc, molletonné, poche kangourou. « DISCIPLE » et sa flamme sur le devant, « à l’image de Dieu » en lettres gothiques au dos, dégradé rouge à bleu.',
-    price: 45,
+    price: 50,
     images: ['/images/12-1.jpeg', '/images/12-2.jpeg'],
-    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100, XXXL: 100, XXXXL: 100 },
+    stock: { S: 0, M: 6, L: 9, XL: 7, XXL: 4, XXXL: 0, XXXXL: 0 },
   },
   {
     id: 'hoodie-disciple-gris',
     name: 'Hoodie DISCIPLE — Gris chiné',
     description:
       'La même pièce en gris chiné. Le dégradé rouge à bleu ressort avec plus de contraste sur ce fond clair.',
-    price: 45,
+    price: 50,
     // Le fichier 13-1 montre le dos : on place le devant en premier pour
     // que la vignette de la boutique reste cohérente avec les autres.
     images: ['/images/13-2.jpeg', '/images/13-1.jpeg'],
-    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100, XXXL: 100, XXXXL: 100 },
+    stock: { S: 0, M: 8, L: 11, XL: 8, XXL: 5, XXXL: 0, XXXXL: 0 },
   },
   {
     id: 'hoodie-disciple-noir',
     name: 'Hoodie DISCIPLE — Noir',
     description:
       'Sweat à capuche noir. « DISCIPLE » sur le devant et « à l’image de Dieu » au dos, où le dégradé rouge à bleu éclate sur le fond sombre.',
-    price: 45,
+    price: 50,
     images: ['/images/14-1.jpeg', '/images/14-2.jpeg'],
-    stock: { S: 100, M: 100, L: 100, XL: 100, XXL: 100, XXXL: 100, XXXXL: 100 },
+    stock: { S: 0, M: 13, L: 21, XL: 16, XXL: 8, XXXL: 0, XXXXL: 0 },
   },
 
   // T-shirts « Made to be like Christ » : flamme brodée à la poitrine
@@ -159,7 +165,7 @@ export const products = [
     name: 'T-shirt CHRIST — Blanc',
     description:
       'T-shirt blanc coupe oversize, col rond côtelé. Flamme rouge à bleu sur la poitrine, « Made to be like Christ » calligraphié en grand au dos.',
-    price: 25,
+    price: 30,
     images: ['/images/15-1.jpeg', '/images/15-2.jpeg'],
     stock: { S: 5, M: 14, L: 10, XL: 5, XXL: 1, XXXL: 0, XXXXL: 0 },
   },
@@ -168,7 +174,7 @@ export const products = [
     name: 'T-shirt CHRIST — Bleu roi',
     description:
       'La même pièce en bleu roi. Le lettrage « Made to be like Christ » ressort en orange vif sur le fond profond.',
-    price: 25,
+    price: 30,
     images: ['/images/16-1.jpeg', '/images/16-2.jpeg'],
     stock: { S: 2, M: 1, L: 4, XL: 1, XXL: 0, XXXL: 0, XXXXL: 0 },
   },
@@ -177,7 +183,7 @@ export const products = [
     name: 'T-shirt CHRIST — Noir',
     description:
       'La même pièce en noir. La flamme et le lettrage « Made to be like Christ » ressortent en dégradé rouge à orange sur le fond sombre.',
-    price: 25,
+    price: 30,
     // Le fichier 17-1 montre le dos : on place le devant en premier,
     // comme pour les hoodies DISCIPLE ci-dessus.
     images: ['/images/17-2.PNG', '/images/17-1.PNG'],
@@ -191,8 +197,8 @@ export const products = [
     name: 'Tote bag DISCIPLE',
     description:
       'Sac fourre-tout en toile blanche, anses longues. « DISCIPLE » imprimé en grand, dégradé rouge à bleu.',
-    price: 10,
+    price: 12,
     image: '/images/tote-bag.jpeg',
-    stock: { Unique: 100 },
+    stock: { Unique: 30 },
   },
 ];

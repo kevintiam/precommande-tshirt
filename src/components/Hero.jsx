@@ -2,13 +2,7 @@ import Image from 'next/image';
 import { Calendar, MapPin } from 'lucide-react';
 
 const VENUE = 'Centre COHERE';
-// ⬇️ Renseignez ici l'adresse postale complète du lieu.
-// Ex. : '9440 boulevard du Golf, Anjou, QC H1J 3A1'
-// Laissée vide, la carte cherche simplement le nom du lieu.
 const ADDRESS = '';
-
-// Lien universel Google Maps : ouvre l'application sur mobile,
-// le site sur ordinateur. encodeURIComponent gère espaces et accents.
 const MAP_URL = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
   [VENUE, ADDRESS].filter(Boolean).join(', ')
 )}`;
@@ -25,14 +19,11 @@ export default function Hero() {
           sizes="(min-width: 768px) 672px, 100vw"
           className="-z-10 object-cover"
         />
-        {/* Voile bordeaux : il teinte la photo aux couleurs de la marque
-            et garantit le contraste du texte blanc, quelle que soit la
-            zone claire de l'image en dessous. */}
         <div className="absolute inset-0 -z-10 bg-linear-to-br from-bordeaux-950/95 via-bordeaux-800/85 to-bordeaux-700/75" />
 
         <div className="px-6 py-12 text-white sm:px-16 sm:py-28">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-bordeaux-200">
-            Précommande · Édition 2026
+            Boutique ADN · Édition 2026
           </p>
 
           <h1 className="mt-4 font-display text-4xl uppercase  tracking-wide leading-[0.92] drop-shadow-sm sm:text-5xl">
@@ -67,8 +58,8 @@ export default function Hero() {
       </div>
 
       <p className="mt-6 leading-relaxed text-stone-600">
-        Précommandez dès maintenant votre t-shirt ou votre hoodie du Camp
-        Impact ADN. Paiement par virement Interac, retrait sur place pendant
+        Achetez dès maintenant votre t-shirt ou votre hoodie du Camp
+        Impact ADN. Paiement par virement Interac ou Paypal, retrait sur place pendant
         le camp.
       </p>
     </section>
