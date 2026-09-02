@@ -35,6 +35,13 @@ const resume = (commande) => ({
   email: commande.email,
   moyen: commande.moyen ?? MOYEN_PAR_DEFAUT,
   firstName: commande.firstName,
+  items: commande.lignes.map((l) => ({
+    productId: l.productId,
+    nom: l.nom,
+    size: l.size,
+    qty: l.qty,
+    prixUnitaire: l.prixUnitaire,
+  })),
 });
 
 export async function POST(request) {

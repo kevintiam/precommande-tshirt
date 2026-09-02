@@ -23,7 +23,7 @@ export function useProofUpload(onSuccess) {
     setErreurPreuve('');
   };
 
-  const envoyerPreuve = async (orderRef, email, firstName) => {
+  const envoyerPreuve = async (order) => {
     if (!fichier || envoiPreuve) return;
     setEnvoiPreuve(true);
     setErreurPreuve('');
@@ -32,7 +32,7 @@ export function useProofUpload(onSuccess) {
       const donnees = new FormData();
       donnees.append('capture', fichier);
 
-      const res = await fetch(`/api/commandes/${orderRef}/preuve`, {
+      const res = await fetch(`/api/commandes/${order.ref}/preuve`, {
         method: 'POST',
         body: donnees,
       });
@@ -42,19 +42,20 @@ export function useProofUpload(onSuccess) {
       if (!res.ok) {
         throw new Error(data.message || `Erreur ${res.status}.`);
       }
-      
-      // Envoi de l'e-mail APRES le succès de l'image
+
       try {
         await fetch('/api/sendReceipt', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            email: email,
-            customerName: firstName || "Client",
-            orderId: orderRef,
+            email: order.email,
+            customerName: order.firstName || 'Client',
+            orderId: order.ref,
+            total: order.total,
+            items: order.items ?? order.lignes ?? [],
           }),
         });
-        console.log("E-mail envoyé avec succès !");
+        console.log('E-mail envoyé avec succès !');
       } catch (mailError) {
         console.error("L'image est passée, mais l'e-mail a échoué :", mailError);
       }
@@ -72,8 +73,8 @@ export function useProofUpload(onSuccess) {
   return {
     fichier,
     envoiPreuve,
-    erreurPreuve,  
-    handleFileChange, 
-    envoyerPreuve,   
+    erreurPreuve,
+    handleFileChange,
+    envoyerPreuve,
   };
 }

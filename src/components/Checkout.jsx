@@ -228,7 +228,7 @@ export default function Checkout({
 
                 <button
                   type="button"
-                  onClick={() => envoyerPreuve(order.ref,order.email,order.firstName)}
+                  onClick={() => envoyerPreuve(order)}
                   disabled={!fichier || envoiPreuve}
                   className="mt-3 w-full cursor-pointer rounded-lg bg-bordeaux-700 py-2.5 text-sm font-semibold uppercase tracking-wide text-white transition-colors hover:bg-bordeaux-800 disabled:cursor-not-allowed disabled:bg-stone-200 disabled:text-stone-400"
                 >
