@@ -3,7 +3,6 @@ import Header from '@/components/Header';
 import Hero from '@/components/Hero';
 import Boutique from '@/components/Boutique';
 import SuiviCommande from '@/components/SuiviCommande';
-import BoutiqueClose from '@/components/BoutiqueClose';
 import { products as amorce } from '@/data/products';
 import {
   lireCatalogue,
@@ -74,9 +73,6 @@ export default async function Home() {
     await rapprocherStock();
     produits = await lireCatalogue();
   } catch (err) {
-    // Catalogue injoignable : on sert la version du fichier, sans
-    // compteur de stock. La commande, elle, sera refusée côté serveur
-    // faute de pouvoir réserver — refuser vaut mieux que survendre.
     console.error('[catalogue] lecture impossible :', err);
   }
 
@@ -88,7 +84,6 @@ export default async function Home() {
         <Hero />
 
         <Boutique products={produits} />
-        {/* <BoutiqueClose /> */}
 
         <SuiviCommande />
 
