@@ -70,8 +70,6 @@ export default function StatsProduits({ commandes, statuts }) {
   const attente = produits.reduce((s, p) => s + p.attente, 0);
 
   const nbPayees = commandes.filter((c) => c.statut === statuts.PAYEE).length;
-  // « En attente » regroupe ici les deux statuts non tranchés : tant que le
-  // virement n'est pas vérifié, la pièce n'est ni vendue ni libérée.
   const nbAttente = commandes.filter(
     (c) => c.statut === statuts.EN_ATTENTE || c.statut === statuts.A_VERIFIER
   ).length;
